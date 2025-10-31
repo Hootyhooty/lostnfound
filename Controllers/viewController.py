@@ -4,7 +4,7 @@ from Models.userModel import User
 from Utils.appError import AppError
 from Models.lostItemModel import LostItem
 from Models.messageModel import Message
-from Utils.hashid_utils import decode_slug
+from Utils.hashid_utils import decode_slug, encode_object_id
 from Utils.auth_decorator import token_required
 
 logger = logging.getLogger(__name__)
@@ -48,6 +48,10 @@ def profile(user, slug):
     # Convert ObjectIds to strings for template rendering
     for item in lost_items:
         item.id_str = str(item.id)
+        try:
+            item.slug = encode_object_id(item.id)
+        except Exception:
+            item.slug = item.id_str
     
     # Fetch inbox messages
     inbox = Message.objects(receiver=target_user).order_by('-created_at')
@@ -85,3 +89,21 @@ def item_detail(slug: str):
         raise AppError("Item not found", 404)
 
     return render_template('item_detail.html', item=item, slug=slug)
+
+# ✅ Edit Lost Item route (owner only)
+@view_bp.route('/item/<slug>/edit')
+@token_required
+def edit_lost_item(user, slug: str):
+    object_id_hex = decode_slug(slug)
+    if not object_id_hex:
+        raise AppError("Invalid item link", 404)
+
+    item = LostItem.objects(id=object_id_hex, is_active=True).first()
+    if not item:
+        raise AppError("Item not found", 404)
+
+    # Only reporter (or admin) can edit
+    if str(item.reported_by.id) != str(user.id) and getattr(user, 'role', None) != "admin":
+        raise AppError("Unauthorized access.", 403)
+
+    return render_template('edit_lost_item.html', item=item, slug=slug)

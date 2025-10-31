@@ -11,6 +11,21 @@
           <p class="text-muted mb-4">Please change the fields below to update your account profile</p>
           
           <form id="editProfileForm">
+            <!-- Profile Photo Section (above email) -->
+            <div class="mb-4">
+              <h5 class="text-muted mb-3">Profile Photo</h5>
+              <div class="d-flex align-items-center gap-3">
+                <img id="displayImagePreview" src="{{ user.photo and ('/uploads/' ~ user.photo) or url_for('static', filename='images/default.jpg') }}" alt="Display" style="width:96px; height:96px; object-fit:cover; border-radius:8px; border:1px solid #ddd;" />
+                <div>
+                  <button type="button" class="btn btn-outline-primary" id="chooseDisplayImageBtn">
+                    <i class="fa fa-image me-2"></i>Choose Image
+                  </button>
+                  <input type="file" id="displayImageInput" accept="image/jpeg,image/jpg,image/png" style="display:none;">
+                  <input type="hidden" name="photo" id="photo" value="{{ user.photo or '' }}" />
+                  <div class="form-text">PNG or JPEG. Updates your account photo.</div>
+                </div>
+              </div>
+            </div>
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label for="email" class="form-label">Email Address</label>
@@ -108,6 +123,7 @@
       </div>
     </div>
   </div>
+  {% include "map_modal.html" %}
 </div>
 
 {% endblock %}
@@ -129,6 +145,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const form = document.getElementById("editProfileForm");
   const deactivateBtn = document.getElementById("deactivateAccountBtn");
+  const chooseDisplayBtn = document.getElementById("chooseDisplayImageBtn");
+  const displayInput = document.getElementById("displayImageInput");
+  const displayHidden = document.getElementById("photo");
+  const displayPreview = document.getElementById("displayImagePreview");
+
+  if (chooseDisplayBtn && displayInput) {
+    chooseDisplayBtn.addEventListener("click", () => displayInput.click());
+    displayInput.addEventListener("change", async () => {
+      const file = displayInput.files && displayInput.files[0];
+      if (!file) return;
+      const fd = new FormData();
+      fd.append("image", file);
+      try {
+        const resp = await fetch("/api/v1/users/upload-image-to-allimgs", { method: "POST", body: fd });
+        const json = await resp.json();
+        if (resp.ok && json && json.status === "success") {
+          const filename = json.data && json.data.filename;
+          displayHidden.value = filename || "";
+          if (filename) {
+            displayPreview.src = `/uploads/${filename}`;
+          }
+        } else {
+          alert(json.message || "Failed to upload image");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error uploading image. Please try again.");
+      }
+    });
+  }
   
   // Handle form submission
   form.addEventListener("submit", async (e) => {

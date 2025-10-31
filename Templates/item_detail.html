@@ -41,9 +41,7 @@
       </div>
 
       <div class="d-flex flex-column align-items-start gap-2">
-        {% if item.status == 'lost' %}
-          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#messageModal" id="claimOrReturnBtn">Contact the Post Owner</button>
-        {% elif item.status == 'found' %}
+        {% if item.status == 'lost' or item.status == 'found' %}
           <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#messageModal" id="claimOrReturnBtn">Contact the Post Owner</button>
         {% endif %}
         
@@ -149,6 +147,28 @@
         sending = false; sendBtn.disabled = false;
       }
     });
+
+    // Hide contact button if the viewer is the owner
+    (async function disableForOwner(){
+      try {
+        if (!token) {
+          return; // not logged in; allow contacting
+        }
+        const resp = await fetch('/api/v1/users/me', { headers: { 'Authorization': `Bearer ${token}` }});
+        const data = await resp.json();
+        if (data && data.success && data.user && data.user.id) {
+          const currentUserId = data.user.id;
+          const ownerId = '{{ item.reported_by.id }}';
+          if (String(currentUserId) === String(ownerId)) {
+            if (claimBtn) claimBtn.style.display = 'none';
+            const sendBtn = document.getElementById('sendMsgBtn');
+            if (sendBtn) sendBtn.disabled = true;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not determine ownership to hide messaging.', e);
+      }
+    })();
   })();
 </script>
 {% endblock %}

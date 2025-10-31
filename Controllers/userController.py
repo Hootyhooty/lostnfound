@@ -143,6 +143,7 @@ def get_image(filename):
 def get_me(current_user):
     try:
         user_data = {
+            "id": str(current_user.id),
             "name": current_user.name,
             "email": current_user.email,
             "role": current_user.role.value if hasattr(current_user.role, 'value') else current_user.role,
@@ -179,6 +180,8 @@ def update_profile(current_user):
             current_user.country = data['country']
         if 'display_phone' in data:
             current_user.display_phone = bool(data['display_phone'])
+        if 'photo' in data:
+            current_user.photo = data['photo'] or "default.jpg"
         
         current_user.save()
         

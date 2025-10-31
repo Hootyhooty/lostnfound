@@ -416,8 +416,18 @@ function handleLoginSuccess(user) {
   }
   
   if (userPhoto) {
-    userPhoto.src = user.photo
-      ? (user.photo.startsWith("http") ? user.photo : `/uploads/${user.photo}`)
+    const chosen = user.photo;
+    userPhoto.src = chosen
+      ? (String(chosen).startsWith("http") ? chosen : `/uploads/${chosen}`)
+      : "../images/default.jpg";
+  }
+
+  // Also update profile page photo if present
+  const profileUserPhoto = document.getElementById("profileUserPhoto");
+  if (profileUserPhoto) {
+    const chosen = user.photo;
+    profileUserPhoto.src = chosen
+      ? (String(chosen).startsWith("http") ? chosen : `/uploads/${chosen}`)
       : "../images/default.jpg";
   }
 
