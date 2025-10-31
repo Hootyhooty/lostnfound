@@ -82,20 +82,24 @@ def setup_logging(app):
     access_logger.addHandler(access_console)
 
     # -------------------------
-    # EMAIL ALERTS (PROD)
+    # EMAIL ALERTS (OPT-IN)
     # -------------------------
-    if not app.debug:
-        mail_handler = SMTPHandler(
-            mailhost=("smtp.gmail.com", 587),
-            fromaddr="noreply@yourapp.com",
-            toaddrs=["admin@yourapp.com"],
-            subject="🚨 Lost&Found Critical Error",
-            credentials=("your_email@gmail.com", "your_app_password"),
-            secure=()
-        )
-        mail_handler.setLevel(logging.ERROR)
-        mail_handler.setFormatter(formatter)
-        app_logger.addHandler(mail_handler)
+    enable_smtp = os.getenv("ENABLE_SMTP_ALERTS", "false").lower() in ("1", "true", "yes")
+    if enable_smtp and not app.debug:
+        try:
+            mail_handler = SMTPHandler(
+                mailhost=(os.getenv("SMTP_HOST", "smtp.gmail.com"), int(os.getenv("SMTP_PORT", "587"))),
+                fromaddr=os.getenv("SMTP_FROM", "noreply@yourapp.com"),
+                toaddrs=[addr.strip() for addr in os.getenv("SMTP_TO", "admin@yourapp.com").split(",") if addr.strip()],
+                subject=os.getenv("SMTP_SUBJECT", "🚨 Lost&Found Critical Error"),
+                credentials=(os.getenv("SMTP_USER", "your_email@gmail.com"), os.getenv("SMTP_PASS", "your_app_password")),
+                secure=()
+            )
+            mail_handler.setLevel(logging.ERROR)
+            mail_handler.setFormatter(formatter)
+            app_logger.addHandler(mail_handler)
+        except Exception as e:
+            app_logger.warning(f"SMTP alerts disabled due to configuration error: {e}")
 
     # -------------------------
     # LOG HOOKS & TASKS
