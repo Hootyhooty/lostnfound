@@ -75,6 +75,11 @@ def setup_logging(app):
     access_logger = logging.getLogger("access")
     access_logger.setLevel(logging.INFO)
     access_logger.addHandler(access_handler)
+    # Mirror access logs to console so Render captures them
+    access_console = logging.StreamHandler()
+    access_console.setFormatter(logging.Formatter("%(asctime)s - %(message)s"))
+    access_console.setLevel(logging.INFO)
+    access_logger.addHandler(access_console)
 
     # -------------------------
     # EMAIL ALERTS (PROD)

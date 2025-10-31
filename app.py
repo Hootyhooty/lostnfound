@@ -125,6 +125,7 @@ def handle_app_error(err):
         request.path.startswith("/me") or 
         request.accept_mimetypes.best == "application/json" or
         request.headers.get('Content-Type') == 'application/json'):
+        app.logger.warning(f"AppError {err.status_code} at {request.path}: {err}")
         response = {
             "status": err.status,
             "message": str(err)
