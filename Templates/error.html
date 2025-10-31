@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="error_section layout_padding">
+  <div class="container text-center">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-container animate-fade-delay">
+          {% for category, message in messages %}
+            <div class="flash-message {{ category }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <h1 class="error_code animate-fade">{{ error_code or "Error" }}</h1>
+    <h2 class="error_message animate-slide">{{ error_message or "Something went wrong." }}</h2>
+    <p class="error_desc animate-fade-delay">
+      We’re sorry, but the page or resource you requested could not be found.
+    </p>
+    <a href="/" class="btn btn-warning animate-pop mt-3">Go Back Home</a>
+  </div>
+</section>
+
+{% endblock %}

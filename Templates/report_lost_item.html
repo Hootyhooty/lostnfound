@@ -1,0 +1,511 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+      <div class="card shadow">
+        <div class="card-header bg-dark text-white">
+          <h4 class="mb-0"><i class="fa fa-search me-2"></i> Report Lost & Found Item</h4>
+        </div>
+        <div class="card-body">
+          <form id="reportLostForm" enctype="multipart/form-data">
+            
+            <!-- Image Upload Section -->
+            <div class="mb-4">
+              <h5 class="text-muted mb-3">Add Images <small class="text-muted">(Optional)</small></h5>
+              <div class="border rounded p-3 text-center" style="border-style: dashed !important;">
+                <button type="button" class="btn btn-outline-primary" id="addImageBtn">
+                  <i class="fa fa-plus me-2"></i>Add Image
+                </button>
+                <input type="file" id="imageInput" multiple accept="image/jpeg,image/jpg,image/png" style="display: none;">
+                <p class="text-muted mt-2 mb-0">
+                  The picture must be a JPEG file and the file size must not be greater than 5 MB. 
+                  You may upload a maximum of 10 photos.
+                </p>
+              </div>
+              <div id="imagePreview" class="mt-3"></div>
+            </div>
+
+            <!-- Details Section (Collapsible) -->
+            <div class="mb-4">
+              <button type="button" class="btn btn-link p-0" data-bs-toggle="collapse" data-bs-target="#detailsSection">
+                <h5 class="text-muted mb-0">
+                  <i class="fa fa-chevron-down me-2"></i>Details
+                </h5>
+              </button>
+              <div class="collapse" id="detailsSection">
+                <div class="mt-3 p-3 bg-light rounded">
+                  <p class="text-muted mb-0">Additional details about your lost item</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lost Item Information Section -->
+            <div class="mb-4">
+              <h5 class="text-muted mb-3">Lost Item Information</h5>
+              
+              <!-- Title Field at Position 1 -->
+              <div class="mb-3">
+                <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="title" name="title" 
+                       placeholder="Enter a brief title for your lost item" required>
+              </div>
+              
+              <!-- Status and Date Fields at Positions 2 and 3 -->
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                  <select class="form-control" id="status" name="status" required>
+                    <option value="lost" selected>Lost</option>
+                    <option value="found">Found</option>
+                  </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="date_lost" class="form-label">Date <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control" id="date_lost" name="date_lost" required>
+                </div>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
+                  <select class="form-control" id="category" name="category" required>
+                    <option value="">Select Category</option>
+                    <option value="Animals / pet">Animals / pet</option>
+                    <option value="Bags / Baggage / Luggage">Bags / Baggage / Luggage</option>
+                    <option value="Clothing">Clothing</option>
+                    <option value="Collectors items">Collectors items</option>
+                    <option value="Currency / Money">Currency / Money</option>
+                    <option value="Documents / Literature">Documents / Literature</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Household / Tools">Household / Tools</option>
+                    <option value="Jewelry">Jewelry</option>
+                    <option value="Mail / Parcel">Mail / Parcel</option>
+                    <option value="Media">Media</option>
+                    <option value="Medical">Medical</option>
+                    <option value="Music instruments">Music instruments</option>
+                    <option value="Personal accessories">Personal accessories</option>
+                    <option value="Sporting goods">Sporting goods</option>
+                    <option value="Tickets">Tickets</option>
+                    <option value="Toys">Toys</option>
+                    <option value="Transportation">Transportation</option>
+                    <option value="Visual art related">Visual art related</option>
+                  </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="sub_category" class="form-label">Sub Category</label>
+                  <select class="form-control" id="sub_category" name="sub_category">
+                    <option value="">Select Sub Category</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="brand_breed" class="form-label">Brand / Breed (For animal)</label>
+                  <input type="text" class="form-control" id="brand_breed" name="brand_breed">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="primary_color" class="form-label">Primary Color</label>
+                  <select class="form-control" id="primary_color" name="primary_color">
+                    <option value="">Select color</option>
+                    <option>black</option>
+                    <option>blue</option>
+                    <option>brown</option>
+                    <option>gold</option>
+                    <option>gray</option>
+                    <option>green</option>
+                    <option>maroon</option>
+                    <option>orange</option>
+                    <option>peach</option>
+                    <option>pink</option>
+                    <option>platinum</option>
+                    <option>red</option>
+                    <option>silver</option>
+                    <option>white</option>
+                    <option>yellow</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="secondary_color" class="form-label">Secondary Color</label>
+                  <select class="form-control" id="secondary_color" name="secondary_color">
+                    <option value="">Select color</option>
+                    <option>black</option>
+                    <option>blue</option>
+                    <option>brown</option>
+                    <option>gold</option>
+                    <option>gray</option>
+                    <option>green</option>
+                    <option>maroon</option>
+                    <option>orange</option>
+                    <option>peach</option>
+                    <option>pink</option>
+                    <option>platinum</option>
+                    <option>red</option>
+                    <option>silver</option>
+                    <option>white</option>
+                    <option>yellow</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Model/Serial Section (Collapsible) -->
+              <div class="mb-3">
+                <button type="button" class="btn btn-link p-0" data-bs-toggle="collapse" data-bs-target="#modelSection">
+                  <small class="text-muted">Click if applicable: Model, Serial / ID / Baggage Claim</small>
+                </button>
+                <div class="collapse" id="modelSection">
+                  <div class="row mt-2">
+                    <div class="col-md-6 mb-3">
+                      <label for="model" class="form-label">Model</label>
+                      <input type="text" class="form-control" id="model" name="model">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label for="serial_id_baggage_claim" class="form-label">Serial / ID / Baggage Claim</label>
+                      <input type="text" class="form-control" id="serial_id_baggage_claim" name="serial_id_baggage_claim">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Specific Description Section -->
+            <div class="mb-4">
+              <h5 class="text-muted mb-3">Specific Description</h5>
+              <textarea class="form-control" id="specific_description" name="specific_description" rows="4" 
+                        placeholder="Please provide a detailed description of your lost item..." required></textarea>
+            </div>
+
+            <!-- Specific Location Section -->
+            <div class="mb-4">
+              <h5 class="text-muted mb-3">Specific Location</h5>
+              <textarea class="form-control" id="specific_location" name="specific_location" rows="3" 
+                        placeholder="Where exactly did you lose this item?"></textarea>
+            </div>
+
+            <!-- Location Information Section -->
+            <div class="mb-4">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="text-muted mb-0">Location Information</h5>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="openLocationMapReportBtn">
+                  <i class="fa fa-map-marker-alt me-2"></i>Pick Location on Map
+                </button>
+              </div>
+              <div class="mb-3">
+                <label for="address" class="form-label">Address</label>
+                <textarea class="form-control" id="address" name="address" rows="2" 
+                          placeholder="Street address"></textarea>
+              </div>
+              
+              <div class="row">
+                <div class="col-md-3 mb-3">
+                  <label for="country" class="form-label">Country <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="country" name="country" required>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label for="state_province" class="form-label">State/Province <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="state_province" name="state_province" required>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label for="city_town" class="form-label">City/Town <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="city_town" name="city_town" required>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label for="zipcode" class="form-label">Zipcode <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="zipcode" name="zipcode" required>
+                </div>
+              </div>
+            </div>
+
+            <!-- Venue Information Section -->
+            <div class="mb-4">
+              <h5 class="text-muted mb-3">Venue Information</h5>
+              <div class="mb-3">
+                <label for="venue_type" class="form-label">Location Venue Type</label>
+                <select class="form-control" id="venue_type" name="venue_type">
+                  <option value="N/A">N/A</option>
+                  <option value="Airport">Airport</option>
+                  <option value="Amusement / Theme park">Amusement / Theme park</option>
+                  <option value="Animal control / Shelter">Animal control / Shelter</option>
+                  <option value="Animal hospital / Vet clinic">Animal hospital / Vet clinic</option>
+                  <option value="Apartment / Condo / Dorm / Housing">Apartment / Condo / Dorm / Housing</option>
+                  <option value="Arena / Civic center / Stadium">Arena / Civic center / Stadium</option>
+                  <option value="Bar / Restaurant / Club / Cafe">Bar / Restaurant / Club / Cafe</option>
+                  <option value="Beach / Lake">Beach / Lake</option>
+                  <option value="Bus / Bus station">Bus / Bus station</option>
+                  <option value="Car rental">Car rental</option>
+                  <option value="Concerts / Events">Concerts / Events</option>
+                  <option value="Country club / Golf course">Country club / Golf course</option>
+                  <option value="Gas station / Convenience store">Gas station / Convenience store</option>
+                  <option value="Grocery store / Supermarket">Grocery store / Supermarket</option>
+                  <option value="Gym / Pool / Sports complex">Gym / Pool / Sports complex</option>
+                  <option value="Historical place">Historical place</option>
+                  <option value="Hospital">Hospital</option>
+                  <option value="Home / Rental property">Home / Rental property</option>
+                  <option value="Hotel / Motel / Casino / Resort area">Hotel / Motel / Casino / Resort area</option>
+                  <option value="Laundry mat / Laundromat / Dry cleaner">Laundry mat / Laundromat / Dry cleaner</option>
+                  <option value="Library">Library</option>
+                  <option value="Local park">Local park</option>
+                  <option value="Museum">Museum</option>
+                  <option value="Office complex">Office complex</option>
+                  <option value="Parking garage">Parking garage</option>
+                  <option value="Park">Park</option>
+                  <option value="Police">Police</option>
+                  <option value="Rest area">Rest area</option>
+                  <option value="School">School</option>
+                  <option value="Ship">Ship</option>
+                  <option value="Ship port">Ship port</option>
+                  <option value="Ferry">Ferry</option>
+                  <option value="Ferry port">Ferry port</option>
+                  <option value="Ski area">Ski area</option>
+                  <option value="State / National park">State / National park</option>
+                  <option value="Store / Mall">Store / Mall</option>
+                  <option value="Taxi / Limo">Taxi / Limo</option>
+                  <option value="Theater / Cinema">Theater / Cinema</option>
+                  <option value="Train / Train station">Train / Train station</option>
+                  <option value="Transit system">Transit system</option>
+                  <option value="Worship center">Worship center</option>
+                  <option value="Zoo / Aquarium">Zoo / Aquarium</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Add these inside the <form id="reportLostForm" ...> after other fields -->
+            <input type="hidden" id="latitude" name="latitude" />
+            <input type="hidden" id="longitude" name="longitude" />
+
+            <!-- Submit Button -->
+            <div class="d-flex gap-2 mb-3">
+              <button type="submit" class="btn btn-success btn-lg">
+                <i class="fa fa-check me-2"></i>Continue
+              </button>
+              <button type="button" class="btn btn-secondary btn-lg" onclick="window.history.back()">
+                <i class="fa fa-times me-2"></i>Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // Set default date to today
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('date_lost').value = today;
+
+  // Check if user is logged in
+  const token = localStorage.getItem("access_token");
+  if (!token) {
+    alert("You must be logged in to report a lost item.");
+    window.location.href = "/";
+    return;
+  }
+
+  // Sub-category data mapping
+  const subCategories = {
+    "Animals / pet": ["Birds", "Cats", "Dogs", "Ferrets", "Mouses", "Horses/Farm animals", "Rabbits", "Reptiles"],
+    "Bags / Baggage / Luggage": ["Backpack/Knapsack", "Breifcase", "Canvas/Duffel/Sportbags", "Makeup bag", "Garment bags", "Suitcase"],
+    "Clothing": ["Assorted cloths/Laundry bag", "Belts/Suspenders", "Blazers/Coats/Jackets/Overcoats", "Cumberbuns/Ties/Vests", "Dresses/Gowns/Skirts", "Gloves/Mittens/Scarfs", "Hats", "Pants", "Sandals/Shoes", "Shirts/Blouses", "Socks", "Sweaters/Sweatshirts", "Swimwear"],
+    "Collectors items": ["Animation images", "Autograph", "Coins", "Comics", "Historic memorabilia", "Holiday/Seasonal", "Knives/Swords", "Military", "Rocks/Fossils/Minerals", "Stamps", "Trading cards"],
+    "Currency / Money": ["Cash", "Foreign currency", "Gift card", "Money order", "Other currency", "Payroll check", "Personal check", "Travelers checks"],
+    "Documents / Literature": ["Books/Correspondence", "Certificates/Degrees/Diplomas/Titles", "Diaries/Memos", "Letters", "Magazines", "School books/Notebooks", "Yearbooks"],
+    "Electronics": ["Pagers", "Camera/Video", "Phones", "Headphones/Earphones/Earbuds", "Chargers/Adapters", "Computers/Taplets/Ipads", "Drones", "GPS", "Radios/TVs", "Remote controllers", "Videogames", "Miscellaneous other"],
+    "Household / Tools": ["Appliances", "Bedding/Sheets/Drapes", "Carriages/Highchairs", "Furnitures", "Garden related", "General Crafts", "Hardwares/Tools", "Household products", "Towels", "Kitchen items"],
+    "Jewelry": ["Bracelets", "Brooches/Medals/Pins", "Chains/Necklaces", "Earring", "Pens", "Rings", "Watches", "Miscellaneous"],
+    "Mail / Parcel": ["DHL", "FedEx", "Roadway", "UPS", "USPS"],
+    "Media": ["Memory sticks/cards", "Film/Digital/Negatives", "Cassettes/CDs/DVDs/Records/Tapes", "Videogames"],
+    "Medical": ["Canes/Crutches/Walkers", "Dental related", "Hearing aids", "Medication/Medical devices/Accessories"],
+    "Music instruments": ["Amps/Mixers/Electronics", "Bass guitars", "Brass", "Guitars", "Keyboards", "Musical", "Percussion", "Recording equipment", "Sheet music", "Strings", "Woodwinds"],
+    "Personal accessories": ["Cosmetics", "Glasses/Sunglasses/Cases/Binoculars", "Handbags/Purses", "IDs/Credit cards/Licenses/Passports", "Keys", "Smoking related", "Umbrellas", "Wallets", "Others"],
+    "Sporting goods": ["Bicycles", "Equipments", "Tools", "Miscellaneous"],
+    "Tickets": ["AIrline", "Auto racing", "Sports", "Bus", "Cinema/Movie", "Concert", "Ferry/Ship", "Theater", "Theme park", "Train"],
+    "Toys": ["Action figures", "Beach/Water toys", "Board games", "Dolls/Stuffed animals", "Radio controlled", "Rockets/Kites", "Vehicles", "Miscellaneous"],
+    "Transportation": ["Airplane related", "Automobile", "Boating related", "Motorcycles/Scooters/Snowmobiles", "Trailers"],
+    "Visual art related": ["Architectural/Engineering/Designs print", "Drawings/Antique prints", "Paintings", "Photographs/Photo albums", "Sculptures/Statues"]
+  };
+
+  // Handle category change to populate sub-categories
+  const categorySelect = document.getElementById('category');
+  const subCategorySelect = document.getElementById('sub_category');
+  
+  categorySelect.addEventListener('change', function() {
+    // Clear existing options
+    subCategorySelect.innerHTML = '<option value="">Select Sub Category</option>';
+    
+    // Get selected category
+    const selectedCategory = this.value;
+    
+    // Populate sub-categories if category is selected
+    if (selectedCategory && subCategories[selectedCategory]) {
+      subCategories[selectedCategory].forEach(subCategory => {
+        const option = document.createElement('option');
+        option.value = subCategory;
+        option.textContent = subCategory;
+        subCategorySelect.appendChild(option);
+      });
+    }
+  });
+
+  // Location functionality is now handled by the global map modal
+
+  const form = document.getElementById("reportLostForm");
+  const imageInput = document.getElementById("imageInput");
+  const addImageBtn = document.getElementById("addImageBtn");
+  const imagePreview = document.getElementById("imagePreview");
+  let uploadedImages = [];
+
+  // Image upload handling
+  addImageBtn.addEventListener("click", () => {
+    imageInput.click();
+  });
+
+  imageInput.addEventListener("change", (e) => {
+    const files = Array.from(e.target.files);
+    
+    // Validate file count
+    if (uploadedImages.length + files.length > 10) {
+      alert("Maximum 10 images allowed");
+      return;
+    }
+
+    files.forEach(file => {
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`File ${file.name} is too large. Maximum size is 5MB.`);
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert(`File ${file.name} is not an image.`);
+        return;
+      }
+
+      // Add to uploaded images
+      uploadedImages.push(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const previewDiv = document.createElement('div');
+        previewDiv.className = 'position-relative d-inline-block me-2 mb-2';
+        previewDiv.innerHTML = `
+          <img src="${e.target.result}" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">
+          <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0" onclick="removeImage(this)">
+            <i class="fa fa-times"></i>
+          </button>
+        `;
+        imagePreview.appendChild(previewDiv);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  // Remove image function
+  window.removeImage = function(button) {
+    const previewDiv = button.closest('.position-relative');
+    const index = Array.from(imagePreview.children).indexOf(previewDiv);
+    uploadedImages.splice(index, 1);
+    previewDiv.remove();
+  };
+
+  // Form submission
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    // Prevent double submission
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn.disabled) {
+      return; // Already submitting
+    }
+    
+    // Disable submit button and show loading state
+    submitBtn.disabled = true;
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin me-2"></i>Processing...';
+    
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Add uploaded images
+    data.images = uploadedImages.map(file => file.name);
+    
+    try {
+      // Upload images first
+      const imageUploadPromises = uploadedImages.map(async (file) => {
+        const imageFormData = new FormData();
+        imageFormData.append('image', file);
+        
+        const response = await fetch('/api/v1/users/upload-image-to-allimgs', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: imageFormData
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to upload ${file.name}`);
+        }
+        
+        const result = await response.json();
+        return result.data.filename;
+      });
+
+      // Wait for all image uploads to complete
+      const uploadedFilenames = await Promise.all(imageUploadPromises);
+      data.images = uploadedFilenames;
+
+      // Submit the lost item report
+      const response = await fetch('/api/v1/lost-items', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert("Lost item reported successfully!");
+        // Redirect to user's profile page
+        const userSlug = "{{ user.profile_slug }}";
+        if (userSlug) {
+          window.location.href = `/profile/${userSlug}`;
+        } else {
+          window.location.href = "/";
+        }
+      } else {
+        alert("Error reporting lost item: " + (result.message || "Unknown error"));
+        // Re-enable submit button on error
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Error reporting lost item. Please try again.");
+      // Re-enable submit button on error
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+    }
+  });
+  
+  // Include map modal partial when this page loads
+  fetch('/Templates/map_modal.html').then(()=>{});
+});
+
+// Location functionality is now handled by the global map modal in custom.js
+</script>
+{% include "map_modal.html" %}
+{% endblock %}

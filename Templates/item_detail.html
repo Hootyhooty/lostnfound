@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-12">
+      <h3 class="mb-3 p-3 text-white rounded" style="background:#0d6efd;">The item {{ item.status }} on {{ item.date_lost.strftime('%Y-%m-%d') if item.date_lost else '' }}</h3>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="d-flex align-items-start" style="gap:20px;">
+            <div style="width:120px;height:120px;background:#f3f3f3" class="d-flex align-items-center justify-content-center border">
+              {% if item.images and item.images|length > 0 %}
+                <img src="/uploads/{{ item.images[0] }}" alt="item" style="max-width:100%;max-height:100%;object-fit:cover;" />
+              {% else %}
+                <span class="text-muted">img</span>
+              {% endif %}
+            </div>
+            <div>
+              <div class="h5"><strong>{{ item.title }}</strong></div>
+              <div><strong>Category:</strong> {{ item.category }}{% if item.sub_category %} → {{ item.sub_category }}{% endif %}</div>
+              {% if item.brand_breed %}<div><strong>Brand:</strong> {{ item.brand_breed }}</div>{% endif %}
+              {% if item.primary_color %}<div><strong>Primary color:</strong> {{ item.primary_color }}</div>{% endif %}
+              {% if item.secondary_color %}<div><strong>Secondary color:</strong> {{ item.secondary_color }}</div>{% endif %}
+              <div><strong>Description:</strong> {{ item.specific_description }}</div>
+            </div>
+          </div>
+
+          <hr/>
+          <h6 class="text-muted">Location details</h6>
+          <div><strong>Location venue type:</strong> {{ item.venue_type }}</div>
+          <div><strong>Venue:</strong> {{ item.address }} {{item.zipcode}} {{ item.city_town }} {{item.state_province}} {{item.country}}, {{ item.specific_location }}.
+{% if item.latitude and item.longitude %}
+  <a href="https://maps.google.com/?q={{ item.latitude }},{{ item.longitude }}" target="_blank" rel="noopener" style="margin-left:8px;font-size:0.95em;">[View on Map]</a>
+{% endif %}
+</div>
+        </div>
+      </div>
+
+      <div class="d-flex flex-column align-items-start gap-2">
+        {% if item.status == 'lost' %}
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#messageModal" id="claimOrReturnBtn">Contact the Post Owner</button>
+        {% elif item.status == 'found' %}
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#messageModal" id="claimOrReturnBtn">Contact the Post Owner</button>
+        {% endif %}
+        
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Message Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="messageModalTitle">Contact the Post Owner</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="contactOwnerForm">
+          <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input class="form-control" id="msg_title" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Message</label>
+            <textarea class="form-control" id="msg_body" rows="5" required></textarea>
+          </div>
+          <div class="mb-2">
+            <button class="btn btn-outline-secondary" type="button" id="uploadMsgImageBtn">Upload Image</button>
+            <input type="file" id="msgImageInput" accept="image/*" style="display:none;" />
+          </div>
+          <div id="msgImagePreview" class="mt-2"></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" id="sendMsgBtn">Send Message</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+  (function(){
+    const claimBtn = document.getElementById('claimOrReturnBtn');
+    const modalTitle = document.getElementById('messageModalTitle');
+    if (claimBtn) {
+      claimBtn.addEventListener('click', function(){
+        modalTitle.textContent = 'Contact the Post Owner';
+      });
+    }
+
+    const token = localStorage.getItem('access_token');
+    const uploadBtn = document.getElementById('uploadMsgImageBtn');
+    const imageInput = document.getElementById('msgImageInput');
+    const preview = document.getElementById('msgImagePreview');
+    let uploadedFilename = null;
+
+    uploadBtn.addEventListener('click', ()=> imageInput.click());
+    imageInput.addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if (!file) return;
+      const fd = new FormData();
+      fd.append('image', file);
+      const resp = await fetch('/api/v1/users/upload-image-to-allimgs',{
+        method:'POST',
+        headers:{ 'Authorization': `Bearer ${token}` },
+        body: fd
+      });
+      if (!resp.ok) { alert('Failed to upload image'); return; }
+      const json = await resp.json();
+      uploadedFilename = json.data.filename;
+      preview.innerHTML = `<img src="/uploads/${uploadedFilename}" style="max-width: 100%; border:1px solid #ddd; border-radius:6px;" />`;
+    });
+
+    let sending = false;
+    document.getElementById('sendMsgBtn').addEventListener('click', async ()=>{
+      if (sending) return; // cooldown
+      const title = document.getElementById('msg_title').value.trim();
+      const body = document.getElementById('msg_body').value.trim();
+      if (!title || !body) { alert('Please fill in title and message'); return; }
+      sending = true;
+      const sendBtn = document.getElementById('sendMsgBtn');
+      sendBtn.disabled = true;
+      const payload = {
+        item_id: '{{ item.id }}',
+        title,
+        body,
+        images: uploadedFilename ? [uploadedFilename] : []
+      };
+      const resp = await fetch('/api/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+      const result = await resp.json();
+      if (result && result.success) {
+        alert('Message sent');
+        const modal = bootstrap.Modal.getInstance(document.getElementById('messageModal'));
+        if (modal) modal.hide();
+        setTimeout(()=>{ sending = false; sendBtn.disabled = false; }, 4000);
+      } else {
+        alert(result.message || 'Failed to send message');
+        sending = false; sendBtn.disabled = false;
+      }
+    });
+  })();
+</script>
+{% endblock %}
+{% endblock %}
+

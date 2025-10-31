@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="shop_section">
+  <style>
+    .shop_section {
+      padding: 40px 0 50px 0;
+    }
+    .shop_section h2,
+    .shop_section .support-text { /* Updated */
+      color: #442c19;
+    }
+    .shop_section h2 {
+      font-weight: 800;
+      font-size: 2.75rem;
+      letter-spacing: -1px;
+      margin-bottom: 0.5em;
+    }
+    .shop_section p, .shop_section .card-title, .shop_section .card-text {
+      color: #442c19;
+    }
+    .shop_section .product-card {
+      background: #fdf5ec; /* Updated: Match page background */
+      border: none;
+      box-shadow: 0 4px 15px rgba(68,44,25,0.08); /* Adjusted shadow for flatter look */
+      border-radius: 1.5em;
+      padding-bottom: 1em;
+      margin-bottom: 2em;
+    }
+    .shop_section .card-img-top {
+      width: 90%;
+      margin: 30px auto 0 auto;
+      background: #fffbe9;
+      border-radius: 1.3em;
+      box-shadow: 0 6px 20px rgba(180,130,80,0.09);
+      display: block;
+      padding: 18px 8px 18px 8px;
+      object-fit: contain;
+      height: 210px;
+      max-width: 260px;
+    }
+    .shop_section .card-title {
+      font-size: 1.45rem;
+      font-weight: 700;
+      margin-top: 16px;
+      margin-bottom: 0.35em;
+    }
+    .shop_section .card-text {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #924e10;
+      margin-bottom: 1.1em;
+    }
+    .shop_section .btn-primary {
+      background: #62422a;
+      border-color: #62422a;
+      color: #fff;
+      border-radius: 11px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      padding: 10px 32px;
+      transition: all 0.12s;
+    }
+    .shop_section .btn-primary:hover, .shop_section .btn-primary:active {
+      background: #442c19;
+      border-color: #442c19;
+      color: #fffbe9;
+      transform: translateY(-2px) scale(1.04);
+    }
+    .shop_section .donation_section h4,
+    .shop_section .donation_section p { /* Updated */
+      color: white; 
+    }
+  </style>
+  <div class="container">
+    <h2 class="text-center mb-4">Support Lost&Found</h2>
+    <p class="text-center text-muted support-text">Help us maintain and grow this platform 💚</p> <!-- Added class -->
+
+    <!-- Basket icon and button -->
+    <div class="text-end mb-3">
+      <button id="basketBtn" type="button" class="btn btn-light position-relative" style="font-size:2.1rem;">
+        <i class="fa fa-shopping-basket"></i>
+        <span id="basketCount" style="position:absolute;top:-8px;right:-8px;background:#442c19;color:white;font-size:1em;border-radius:50%;padding:2px 9px 2px 8px;min-width:24px;">0</span>
+      </button>
+    </div>
+
+    <div class="row">
+      <!-- Product Card: Lost&Found Mug -->
+      <div class="col-md-4">
+        <div class="card product-card">
+          <img src="/images/hooter_mug.png" class="card-img-top" alt="Lost&Found Mug">
+          <div class="card-body text-center">
+            <h5 class="card-title">Lost&Found Mug</h5>
+            <p class="card-text text-muted">$12</p>
+            <button class="btn btn-primary add-to-basket" data-item="mug" data-name="Lost&Found Mug" data-price="12">Add to Basket</button>
+          </div>
+        </div>
+      </div>
+      <!-- Product Card: Lost&Found Shirt -->
+      <div class="col-md-4">
+        <div class="card product-card">
+          <img src="/images/hooter_shirt.png" class="card-img-top" alt="Lost&Found Shirt">
+          <div class="card-body text-center">
+            <h5 class="card-title">Lost&Found Shirt</h5>
+            <p class="card-text text-muted">$20</p>
+            <button class="btn btn-primary add-to-basket" data-item="shirt" data-name="Lost&Found Shirt" data-price="20">Add to Basket</button>
+          </div>
+        </div>
+      </div>
+      <!-- Product Card: Lost&Found Cap -->
+      <div class="col-md-4">
+        <div class="card product-card">
+          <img src="/images/hooter_cap.png" class="card-img-top" alt="Lost&Found Cap">
+          <div class="card-body text-center">
+            <h5 class="card-title">Lost&Found Cap</h5>
+            <p class="card-text text-muted">$15</p>
+            <button class="btn btn-primary add-to-basket" data-item="cap" data-name="Lost&Found Cap" data-price="15">Add to Basket</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Basket Modal (Hidden by default) -->
+    <div class="modal fade" id="basketModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header" style="background:#442c19;color:white;">
+            <h4 class="modal-title"><i class="fa fa-shopping-basket me-2"></i>Your Basket</h4>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div id="basketItems"></div>
+            <hr/>
+            <div class="d-flex justify-content-between align-items-center">
+              <strong style="font-size:1.16rem;">Total: $<span id="basketTotal">0</span></strong>
+              <div>
+                <button class="btn btn-warning me-2" id="paypalCheckout"><i class="fa fa-paypal me-1"></i>Pay with PayPal</button>
+                <button class="btn btn-dark" id="stripeCheckout"><i class="fa fa-credit-card me-1"></i>Pay with Stripe</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="donation_section text-center mt-5">
+      <h4>Prefer to just donate?</h4>
+      <p>Every little bit helps keep Lost&Found alive 💛</p>
+      <a href="https://buymeacoffee.com/hooth3205" class="btn btn-warning">
+        Buy me a coffee ☕
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}

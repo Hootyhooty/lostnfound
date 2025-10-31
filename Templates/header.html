@@ -1,0 +1,178 @@
+<div class="hero_area">
+<header class="header_section">
+  <div class="container-fluid">
+    <nav class="navbar navbar-expand-lg custom_nav-container">
+      <a class="navbar-brand" href="/">
+        <img src="{{ url_for('static', filename='images/lf2.png') }}" alt="Lost&Found Icon" class="brand-icon">
+        <span>Lost&Found</span>
+      </a>
+
+      <div>
+        <div class="User_option d-flex align-items-center">
+
+          <!-- USER DROPDOWN -->
+          <div class="dropdown ms-3" id="userDropdown" style="display: none;">
+            <a class="btn btn-outline-light dropdown-toggle d-flex align-items-center"
+               href="#" id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+              <img id="userPhoto" src="{{ url_for('static', filename='images/default.jpg') }}"
+                   alt="User" class="rounded-circle me-2" style="width:30px; height:30px; object-fit:cover;">
+              <span id="userDisplayName">User</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end user-dropdown-custom" aria-labelledby="userMenuButton">
+              <li><a class="dropdown-item" id="profileLink" href="#">Profile</a></li>
+              <li><a class="dropdown-item" href="/report-lost-found"><i class="fa fa-search me-2"></i> Report Item</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="#" id="logoutLink"><i class="fa fa-sign-out me-2"></i>Logout</a></li>
+            </ul>
+          </div>
+
+          <!-- LOGIN BUTTON -->
+          <button id="loginBtn" class="btn btn-outline-light ms-2" data-bs-toggle="modal" data-bs-target="#loginModal">
+            <i class="fa fa-user" aria-hidden="true"></i> Login
+          </button>
+
+          <!-- REGISTER BUTTON -->
+          <button id="registerBtn" class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#loginModal">
+            <i class="fa fa-user-plus" aria-hidden="true"></i> Register
+          </button>
+
+          <!-- SEARCH -->
+          <form class="form-inline ms-3">
+            <input type="search" placeholder="Search" />
+            <button class="btn nav_search-btn" type="submit">
+              <i class="fa fa-search" aria-hidden="true"></i>
+            </button>
+          </form>
+        </div>
+
+        <div class="custom_menu-btn">
+          <button onclick="openNav()">
+            <img src="{{ url_for('static', filename='images/menu.png') }}" alt="">
+          </button>
+        </div>
+
+        <div id="myNav" class="overlay">
+          <div class="overlay-content">
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="/blog">Blog</a>
+            <a href="/testimonial">Testimonial</a>
+            <a href="/admin/logs" class="admin-link">Admin</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </div>
+</header>
+
+  <!-- Login / Register / Forgot Modal (unchanged) -->
+  <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content p-3" style="border-radius: 15px;">
+        <div class="modal-header border-0">
+          <h5 class="modal-title" id="loginModalLabel">Log in</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+
+          <!-- LOGIN FORM -->
+          <form id="loginForm">
+            <div class="form-group mb-3">
+              <label>Username or Email</label>
+              <input type="text" id="loginUsername" class="form-control" name="username" placeholder="Enter your username or email" required>
+            </div>
+            <div class="form-group mb-3">
+              <label>Password</label>
+              <div class="input-group">
+                <input type="password" id="loginPassword" class="form-control" name="password" placeholder="Enter password" required>
+                <button class="btn btn-outline-secondary" type="button" id="toggleLoginPassword"><i class="fa fa-eye"></i></button>
+              </div>
+            </div>
+
+            <div class="form-check mb-3 d-flex justify-content-between align-items-center">
+              <div>
+                <input type="checkbox" class="form-check-input" id="rememberMe" checked>
+                <label class="form-check-label" for="rememberMe">Remember me</label>
+              </div>
+              <a href="#" id="showForgot" class="text-muted small">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="btn btn-success btn-block w-100">Sign In</button>
+          </form>
+
+          <!-- REGISTER FORM -->
+          <form id="registerForm" class="d-none">
+            <div class="form-group mb-3">
+              <label>Username</label>
+              <input type="text" id="regName" class="form-control" name="name" placeholder="Choose a username" required>
+            </div>
+
+            <div class="form-group mb-3">
+              <label>Phone number</label>
+              <input type="number" id="regPhone" class="form-control" name="phone" placeholder="Enter your phone number" required>
+            </div>
+
+            <div class="form-group mb-3">
+              <label>Email Address</label>
+              <input type="email" id="regEmail" class="form-control" name="email" placeholder="Enter your email" required>
+            </div>
+
+            <div class="form-group mb-3">
+              <label>Password</label>
+              <div class="input-group">
+                <input type="password" id="regPassword" class="form-control" name="password" placeholder="Create a password" required minlength="8">
+                <button class="btn btn-outline-secondary" type="button" id="toggleRegPassword"><i class="fa fa-eye"></i></button>
+              </div>
+            </div>
+
+            <div class="form-group mb-3">
+              <label>Confirm Password</label>
+              <div class="input-group">
+                <input type="password" id="regConfirm" class="form-control" name="password_confirm" placeholder="Re-enter password" required minlength="8">
+                <button class="btn btn-outline-secondary" type="button" id="toggleRegConfirm"><i class="fa fa-eye"></i></button>
+              </div>
+              <small id="passwordMatchMessage" class="text-danger mt-1" style="display:none;">Passwords do not match</small>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block w-100">Register</button>
+          </form>
+
+          <!-- FORGOT PASSWORD FORM -->
+          <form id="forgotForm" class="d-none">
+            <div class="form-group mb-3">
+              <label>Enter your email address</label>
+              <input type="email" id="forgotEmail" class="form-control" name="email" placeholder="Enter your email" required>
+            </div>
+            <button type="submit" class="btn btn-warning btn-block w-100">Send Reset Link</button>
+
+            <div class="text-center mt-3">
+              <p>
+                Remember your password? <a href="#" id="showLoginFromForgot">Log in</a>
+              </p>
+            </div>
+          </form>
+
+<!-- RESET PASSWORD FORM -->
+<form id="resetForm" class="d-none">
+  <div class="form-group mb-3">
+    <label>Enter new password</label>
+    <input type="password" id="resetPassword" class="form-control" placeholder="New password" required minlength="8">
+  </div>
+  <div class="form-group mb-3">
+    <label>Confirm new password</label>
+    <input type="password" id="resetConfirm" class="form-control" placeholder="Confirm password" required minlength="8">
+  </div>
+  <button type="submit" class="btn btn-success btn-block w-100">Reset Password</button>
+</form>
+
+          <!-- TOGGLE LINKS -->
+          <div class="text-center mt-3">
+            <p id="loginPrompt">New user? <a href="#" id="showRegister">Register Now</a></p>
+            <p id="registerPrompt" class="d-none">Already have an account? <a href="#" id="showLogin">Log in here</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- End Modal -->

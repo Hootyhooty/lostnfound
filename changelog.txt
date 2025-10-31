@@ -1,0 +1,1039 @@
+Changelog - Lost&Found
+====================================
+
+Entry: Shop Basket System, Login Requirement, Homepage Alignment, and UI/UX Improvements
+Date: 2025-10-30T00:00:00Z
+
+Highlights:
+- Implemented fully functional basket (cart) system on shop page:
+    - Add to Basket button (login required; triggers login modal/toast for guests)
+    - Basket icon and modal: view/edit/remove items, see total, checkout via PayPal/Stripe buttons
+    - Basket persists via localStorage and is only available to logged-in users
+    - Sales submission endpoint: records sale to database before redirecting to payment
+- Shop and homepage UI major refresh:
+    - Centered and responsive layout for shop links, quick search, and report/shop images
+    - Reduced and unified sizing of "Visit the Shop" and "Report Items" image rows
+- Login required before redirect for "Report Items" and "Shop" images/buttons:
+    - JS checks for login on click, shows login modal or centers alert if user not authenticated
+    - Report image redirects to Report page only if logged in
+- Bug Fixes and Robustness:
+    - Fixed race condition on basket login enforcement: does not add to basket for unauthenticated users even if clicked repeatedly
+    - Map modal re-integration instructions and best practices clarified (hidden fields, confirmation logic)
+    - Backend sales endpoint requires user to be logged in (no optional checkout)
+- Model & endpoint changes:
+    - New Models/salesModel.py (Sale data structure)
+    - New Controllers/salesController.py (POST /api/v1/sales)
+    - New route in Routes/adminRoutes.py for sales submission
+
+Modified Files:
+- Templates/index.html
+- Templates/shop.html
+- js/custom.js
+- Models/salesModel.py (new)
+- Controllers/salesController.py (new)
+- Routes/adminRoutes.py
+- Other support/utility and modal files as referenced in prior entries
+
+User-facing Changes:
+- Basket modal + logic now available and only works for logged-in users (robust enforcement)
+- Center-aligned index and shop page, polished image and card sizing
+- Clicking "Report Items" image or similar links requires authentication and gives helpful login prompt
+- Sale records now created prior to payment, enabling better order tracking and analytics
+- All layout and image features are now more consistent across breakpoints
+
+Entry: Item detail page, Messaging UX, Footer CTA, Claimed flow, Map modal refactor
+Date: 2025-10-29T00:00:00Z
+
+Highlights:
+- Added slug-based item detail page with centered layout, bold header, and contact popup
+- Moved Support Us button to the global footer (after testimonial), removed per-page buttons
+- Centered all modals (message, map, view message) for consistent UX
+- Messaging improvements: unread indicators, clickable titles to modal, reply support, cooldown to prevent duplicate sends
+- Listings actions: View Messages (filter by item) and Mark as Claimed (move to claimed_items)
+- Refactored map modal out of base layout into an includable partial
+
+New Endpoints:
+- POST /api/v1/messages          → send message (read=false)
+- GET  /api/v1/messages/inbox    → inbox listing (supports ?item_id=)
+- PATCH /api/v1/messages/<id>/read → mark a message as read
+- POST /api/v1/messages/reply    → reply to a message sender
+- POST /api/v1/lost-items/<id>/claim → move item to claimed_items
+
+Database:
+- New collection: messages (sender, receiver, item, title, body, images[], read, created_at)
+- New collection: claimed_items (snapshot of lost item data upon claim)
+
+Added Files:
+- Models/claimedItemModel.py
+- Templates/item_detail.html (new detail layout and modal)
+- Templates/map_modal.html (moved out of base)
+
+Modified Files:
+- Controllers/searchController.py        → include slug in search results
+- Controllers/viewController.py          → item_detail route, inbox on profile
+- Controllers/messageController.py       → create, inbox, mark_read, reply
+- Controllers/lostItemController.py      → claim_lost_item
+- Routes/messageRoutes.py                → messages routes
+- Routes/lostItemRoutes.py               → claim route
+- Templates/profile.html                 → unread badge, clickable titles, view messages filter, claim action, reply UI
+- Templates/footer.html                  → added Support Us button
+- Templates/item_detail.html             → layout changes, centered modal, cooldown, image upload in message
+- Templates/base.html                    → removed embedded map modal
+- Templates/report_lost_item.html        → include map_modal partial
+- Templates/css/style.css                → moved map modal styles and added .page-container utility
+
+Notes:
+- All modals use Bootstrap modal-dialog-centered where applicable
+- Message send and reply buttons disable during send and re-enable after a short cooldown
+
+Entry: Search Functionality Fix & Title Field Implementation
+Date: 2025-10-27T16:30:00Z
+
+Added Features:
+- Title field added to LostItem model (required field, max 200 chars)
+- Title field added to report form (position 1, above status and date)
+- Enhanced search logging for debugging
+- Search now supports case-insensitive matching
+
+Modified Files:
+- Models/lostItemModel.py - Added title field to LostItem schema and to_json() method
+- Controllers/lostItemController.py - Added title to required fields validation, create, and update functions
+- Controllers/searchController.py - Complete rewrite to use MongoEngine Q objects instead of raw MongoDB operators, fixed field name mappings, added authentication debugging, case-insensitive status matching
+- Templates/report_lost_item.html - Added title input field at position 1 in form layout
+
+Key Fixes:
+- Fixed "Cannot resolve field $or" error by replacing raw MongoDB $or/$and operators with Q objects
+- Fixed authentication issue where user_id was not properly extracted from JWT token
+- Fixed field name mismatches: state→state_province, city→city_town, description→specific_description, location_description→specific_location
+- Fixed case-sensitivity issue: database stores "Found" but enum expects "found" - now uses case-insensitive matching
+- Fixed function signature mismatch in search_items decorator
+- Updated helper functions to handle both old items without title field and new ReferenceField objects
+- Fixed image URL paths in search results
+
+Technical Details:
+- Search controller now uses MongoEngine Q objects for proper query construction
+- Authentication decorator now correctly extracts user_id from decoded JWT payload
+- Added comprehensive error logging for search debugging
+- Database connection default changed to 'lostnfound_db' database
+- Result formatting now uses getattr() for safe field access on older items
+
+Bug Fixes:
+- Search endpoint 500 errors resolved
+- Lost item creation now properly handles required title field
+- Search results display correct field mappings
+
+Entry: Report Lost Item System Implementation
+Date: 2025-01-27T12:00:00Z
+
+Added Files:
+- Models/lostItemModel.py - Complete database model for lost items with enums for categories, venue types, and status
+- Controllers/lostItemController.py - API endpoints for CRUD operations on lost items
+- Routes/lostItemRoutes.py - Route definitions for lost item APIs
+- Templates/report_lost_item.html - Comprehensive form matching wireframe specifications
+
+Modified Files:
+- Controllers/viewController.py - Added report_lost_item function and updated profile to fetch lost items
+- Routes/viewRoutes.py - Added /report-lost route
+- Templates/header.html - Updated dropdown with "Report Lost Item" link and icons
+- Templates/profile.html - Enhanced to display lost items in proper table format with actions
+- app.py - Registered new lost item routes
+
+Key Features Implemented:
+- Complete lost item reporting form with image upload (max 10 photos, 5MB each)
+- Color dropdowns (black, blue, brown, gold, gray, green, maroon, orange, peach, pink, platinum, red, silver, white, yellow)
+- Removed sub-category field as requested
+- Location validation using Zippopotam.us API for supported countries (US, CA, GB, AU, DE, FR)
+- Profile page now displays lost items in table format with view/edit/delete actions
+- Authentication required for all lost item operations
+- Auto-redirect to user profile after successful submission
+
+Technical Details:
+- Database model includes all fields from wireframe with proper validation
+- Server-side location validation with graceful fallback for unsupported countries
+- Image upload integration with existing AllImgs system
+- Responsive design with Bootstrap styling
+- Comprehensive error handling and user feedback
+
+Entry: Baseline snapshot created
+Date: 2025-10-08T00:00:00Z
+
+Notes:
+- This entry establishes a baseline of the current project state. Future edits can be appended as new entries describing added/modified/removed files and notable changes.
+
+Project Tree Snapshot (Current State - 2025-10-27):
+
+./
+  - app.py
+  - changelog.txt
+  - requirements.txt
+  - Controllers/
+    - __init__.py
+    - adminController.py
+    - authController.py
+    - errorController.py
+    - lostItemController.py
+    - searchController.py
+    - userController.py
+    - viewController.py
+  - Models/
+    - allImgsModel.py
+    - lostItemModel.py
+    - userModel.py
+  - Routes/
+    - __init__.py
+    - adminRoutes.py
+    - lostItemRoutes.py
+    - searchRoutes.py
+    - userRoutes.py
+    - viewRoutes.py
+  - Utils/
+    - appError.py
+    - auth_decorator.py
+    - db.py
+    - email.py
+    - jwt_utils.py
+    - logger.py
+  - Templates/
+    - about.html
+    - admin_logs.html
+    - base.html
+    - blog.html
+    - edit_profile.html
+    - error.html
+    - footer.html
+    - header.html
+    - index.html
+    - profile.html
+    - report_lost_item.html
+    - result.html
+    - scripts.html
+    - shop.html
+    - testimonial.html
+    - title.html
+    - css/ (bootstrap, font-awesome, style)
+    - fonts/ (Poppins)
+  - js/
+    - bootstrap.js
+    - custom.js
+    - jquery-3.4.1.min.js
+  - images/ (23 image files)
+  - fonts/ (fontawesome fonts)
+  - logs/
+  - instance/
+  - fonts/
+    - bodoni-svtytwo-sc-itc-tt-book.ttf
+    - fontawesome-webfont.ttf
+    - fontawesome-webfont.woff
+    - fontawesome-webfont.woff2
+  - images/
+    - 544053-200.png
+    - about-img.jpg
+    - app_store.png
+    - app-bg.png
+    - body-bg.jpg
+    - finding.jpg
+    - footer-bg.png
+    - found.png
+    - found2.png
+    - google_play.png
+    - hero-bg.jpg
+    - lf1.png
+    - lf2.ico
+    - lf2.png
+    - lost.jpg
+    - lost.png
+    - menu.png
+    - mobile.png
+    - n1.jpg
+    - n2.jpg
+    - r1.jpg
+    - r2.jpg
+    - r3.jpg
+    - slider-img1.png
+    - slider-img2.png
+    - slider-img3.png
+    - slider-img4.png
+  - instance/
+  - js/
+    - bootstrap.js
+    - custom.js
+    - jquery-3.4.1.min.js
+  - Models/
+  - Routes/
+    - __init__.py
+    - __pycache__/ (generated)
+    - viewRoutes.py
+  - Templates/
+    - about.html
+    - base.html
+    - blog.html
+    - css/
+      - bootstrap.css
+      - font-awesome.min.css
+      - responsive.css
+      - style.css
+      - style.css.map
+    - error.html
+    - fonts/
+      - Poppins-Bold.ttf
+      - Poppins-Regular.ttf
+      - Poppins-SemiBold.ttf
+    - footer.html
+    - header.html
+    - index.html
+    - scripts.html
+    - testimonial.html
+    - title.html
+
+How to use this changelog going forward:
+- Append new entries with current timestamp whenever files change.
+- For each entry, list created/modified/deleted files and summarize changes.
+
+
+
+Entry: Admin page fixes and static asset routing updates
+Date: 2025-10-08T22:20:00Z
+
+Summary:
+- Fixed admin template name mismatch and asset 404s when loading `/admin/logs`.
+- Ensured header image paths work under any route (including `/admin/...`).
+- Added explicit routes to serve `js`, `images`, and `fonts` (including Poppins from `Templates/fonts`).
+- Removed invalid SRI attributes that were blocking CDN scripts.
+
+Changed Files:
+- Modified: Controllers/adminController.py
+  - Render `admin_logs.html` instead of non-existent `admin_log.html`.
+
+- Modified: Templates/header.html
+  - Use `url_for('static', ...)` for `images/lf2.png` and `images/menu.png`.
+
+- Modified: app.py
+  - Added routes: `/js/<path>`, `/images/<path>`, `/fonts/<path>`.
+  - Fonts route serves from `Templates/fonts` with fallback to root `fonts/`.
+
+- Modified: Templates/scripts.html
+  - Removed `integrity` attributes on CDN `<script>` tags to prevent blocking.
+
+Follow-up Notes:
+- If you host assets behind a CDN with SRI, re-add integrity hashes that match the exact CDN files used.
+- If further 404s appear, confirm the requested path matches an existing file under `images/`, `js/`, `Templates/fonts/`, or `fonts/`.
+
+./
+  - app.py
+  - changelog.txt (this file)
+  - Controllers/
+    - __init__.py
+    - __pycache__/ (generated)
+    - adminController.py
+    - errorController.py
+    - viewController.py
+  - fonts/
+    - bodoni-svtytwo-sc-itc-tt-book.ttf
+    - fontawesome-webfont.ttf
+    - fontawesome-webfont.woff
+    - fontawesome-webfont.woff2
+  - images/
+    - 544053-200.png
+    - about-img.jpg
+    - app_store.png
+    - app-bg.png
+    - body-bg.jpg
+    - finding.jpg
+    - footer-bg.png
+    - found.png
+    - found2.png
+    - google_play.png
+    - hero-bg.jpg
+    - lf1.png
+    - lf2.ico
+    - lf2.png
+    - lost.jpg
+    - lost.png
+    - menu.png
+    - mobile.png
+    - n1.jpg
+    - n2.jpg
+    - r1.jpg
+    - r2.jpg
+    - r3.jpg
+    - slider-img1.png
+    - slider-img2.png
+    - slider-img3.png
+    - slider-img4.png
+  - instance/
+  - js/
+    - bootstrap.js
+    - custom.js
+    - jquery-3.4.1.min.js
+  - Models/
+  - Routes/
+    - __init__.py
+    - __pycache__/ (generated)
+    - adminRoutes.py
+    - viewRoutes.py
+  - Templates/
+    - about.html
+    - admin_logs.html
+    - base.html
+    - blog.html
+    - css/
+      - bootstrap.css
+      - font-awesome.min.css
+      - responsive.css
+      - style.css
+      - style.css.map
+    - error.html
+    - fonts/
+      - Poppins-Bold.ttf
+      - Poppins-Regular.ttf
+      - Poppins-SemiBold.ttf
+    - footer.html
+    - header.html
+    - index.html
+    - scripts.html
+    - testimonial.html
+    - title.html
+    - admin_logs.html
+
+
+Entry: Project structure update and current state snapshot
+Date: 2025-10-9T12:00:00Z
+
+Summary:
+- Updated changelog to reflect current project state
+- Added missing files and directories that were not captured in previous entries
+- Included complete project tree snapshot for current session
+
+Changes Since Last Entry:
+- Added: Controllers/adminController.py (was missing from baseline)
+- Added: Controllers/errorController.py (was missing from baseline)  
+- Added: Routes/adminRoutes.py (was missing from baseline)
+- Added: Templates/admin_logs.html (was missing from baseline)
+- Added: logs/ directory with log files
+- Added: Utils/ directory with logger.py
+
+Current Project Tree Snapshot:
+
+./
+  - app.py
+  - changelog.txt (this file)
+  - Controllers/
+    - __init__.py
+    - __pycache__/ (generated)
+    - adminController.py
+    - errorController.py
+    - viewController.py
+  - fonts/
+    - bodoni-svtytwo-sc-itc-tt-book.ttf
+    - fontawesome-webfont.ttf
+    - fontawesome-webfont.woff
+    - fontawesome-webfont.woff2
+  - images/
+    - 544053-200.png
+    - about-img.jpg
+    - app_store.png
+    - app-bg.png
+    - body-bg.jpg
+    - finding.jpg
+    - footer-bg.png
+    - found.png
+    - found2.png
+    - google_play.png
+    - hero-bg.jpg
+    - lf1.png
+    - lf2.ico
+    - lf2.png
+    - lost.jpg
+    - lost.png
+    - menu.png
+    - mobile.png
+    - n1.jpg
+    - n2.jpg
+    - r1.jpg
+    - r2.jpg
+    - r3.jpg
+    - slider-img1.png
+    - slider-img2.png
+    - slider-img3.png
+    - slider-img4.png
+  - instance/
+  - js/
+    - bootstrap.js
+    - custom.js
+    - jquery-3.4.1.min.js
+  - logs/
+    - access.log
+    - app.log
+    - app.log.2025-10-08
+    - error.log
+  - Models/
+  - Routes/
+    - __init__.py
+    - __pycache__/ (generated)
+    - adminRoutes.py
+    - viewRoutes.py
+  - Templates/
+    - about.html
+    - admin_logs.html
+    - base.html
+    - blog.html
+    - css/
+      - bootstrap.css
+      - font-awesome.min.css
+      - responsive.css
+      - style.css
+      - style.css.map
+    - error.html
+    - fonts/
+      - Poppins-Bold.ttf
+      - Poppins-Regular.ttf
+      - Poppins-SemiBold.ttf
+    - footer.html
+    - header.html
+    - index.html
+    - scripts.html
+    - testimonial.html
+    - title.html
+  - Utils/
+    - __pycache__/ (generated)
+    - logger.py
+
+Entry: JWT carried via HttpOnly cookies; profile page integration fixed
+Date: 2025-10-13T00:00:00Z
+
+Summary:
+- Set access and refresh tokens as HttpOnly cookies on login and refresh for seamless navigation to protected views.
+- Updated auth middleware to accept JWT from Authorization header or cookies.
+- Fixed `Templates/profile.html` to call unified `/me` endpoint and use `/uploads/<filename>` for profile photos.
+
+Changed Files:
+- Modified: Controllers/authController.py
+  - Return response using `make_response` and set `access_token` and `refresh_token` cookies.
+  - On `/refresh`, set updated `access_token` cookie.
+
+- Modified: Utils/auth_decorator.py
+  - Read token from `Authorization` header or fallback to `access_token` cookie.
+
+- Modified: Templates/profile.html
+  - Fetch user via `/me` with `credentials: "include"` and correct image path to `/uploads/<filename>`.
+
+Notes:
+- Cookies are set with `HttpOnly` and `SameSite=Lax`. Set `secure=True` in production over HTTPS.
+
+Current Project Tree Snapshot:
+
+./
+  - app.py
+  - changelog.txt (this file)
+  - Controllers/
+    - __init__.py
+    - __pycache__/ (generated)
+    - adminController.py
+    - authController.py
+    - errorController.py
+    - viewController.py
+  - fonts/
+    - bodoni-svtytwo-sc-itc-tt-book.ttf
+    - fontawesome-webfont.ttf
+    - fontawesome-webfont.woff
+    - fontawesome-webfont.woff2
+  - images/
+    - 544053-200.png
+    - about-img.jpg
+    - app_store.png
+    - app-bg.png
+    - body-bg.jpg
+    - default.jpg
+    - finding.jpg
+    - footer-bg.png
+    - found.png
+    - found2.png
+    - google_play.png
+    - hero-bg.jpg
+    - lf1.png
+    - lf2.ico
+    - lf2.png
+    - lost.jpg
+    - lost.png
+    - menu.png
+    - mobile.png
+    - n1.jpg
+    - n2.jpg
+    - r1.jpg
+    - r2.jpg
+    - r3.jpg
+    - slider-img1.png
+    - slider-img2.png
+    - slider-img3.png
+    - slider-img4.png
+  - instance/
+  - js/
+    - bootstrap.js
+    - custom.js
+    - jquery-3.4.1.min.js
+  - logs/
+    - access.log
+    - access.log.2025-10-08.gz
+    - access.log.2025-10-10.gz
+    - access.log.2025-10-11.gz
+    - app.log
+    - app.log.2025-10-08.gz
+    - app.log.2025-10-09.gz
+    - app.log.2025-10-10.gz
+    - app.log.2025-10-11.gz
+    - error.log
+    - error.log.2025-10-08.gz
+    - error.log.2025-10-10.gz
+    - error.log.2025-10-11.gz
+  - Models/
+    - __pycache__/ (generated)
+    - allImgsModel.py
+    - userModel.py
+  - Routes/
+    - __init__.py
+    - __pycache__/ (generated)
+    - adminRoutes.py
+    - userRoutes.py
+    - viewRoutes.py
+  - Templates/
+    - about.html
+    - admin_logs.html
+    - base.html
+    - blog.html
+    - css/
+      - bootstrap.css
+      - font-awesome.min.css
+      - responsive.css
+      - style.css
+      - style.css.map
+    - error.html
+    - fonts/
+      - Poppins-Bold.ttf
+      - Poppins-Regular.ttf
+      - Poppins-SemiBold.ttf
+    - footer.html
+    - header.html
+    - index.html
+    - profile.html
+    - scripts.html
+    - testimonial.html
+    - title.html
+  - Utils/
+    - __pycache__/ (generated)
+    - appError.py
+    - auth_decorator.py
+    - db.py
+    - email.py
+    - jwt_utils.py
+    - logger.py
+
+
+Entry: Auth controller, user model, utils added; profile template; logs rotated
+Date: 2025-10-10T00:00:00Z
+
+Summary:
+- Added authentication controller, user model, and supporting utils.
+- Added user profile template.
+- Log rotation artifacts now present (gz archives for 2025-10-08 and 2025-10-09).
+- Captured full project tree snapshot.
+
+Changes Since Last Entry:
+- Added: Controllers/authController.py
+- Added: Models/userModel.py
+- Added: Utils/auth_decorator.py
+- Added: Utils/db.py
+- Added: Utils/email.py
+- Added: Utils/jwt_utils.py
+- Added: Templates/profile.html
+- Updated: logs/ (added access.log.2025-10-08.gz, app.log.2025-10-08.gz, app.log.2025-10-09.gz, error.log.2025-10-08.gz)
+
+Current Project Tree Snapshot:
+
+./
+  - app.py
+  - changelog.txt (this file)
+  - Controllers/
+    - __init__.py
+    - __pycache__/ (generated)
+    - adminController.py
+    - authController.py
+    - errorController.py
+    - viewController.py
+  - fonts/
+    - bodoni-svtytwo-sc-itc-tt-book.ttf
+    - fontawesome-webfont.ttf
+    - fontawesome-webfont.woff
+    - fontawesome-webfont.woff2
+  - images/
+    - 544053-200.png
+    - about-img.jpg
+    - app_store.png
+    - app-bg.png
+    - body-bg.jpg
+    - finding.jpg
+    - footer-bg.png
+    - found.png
+    - found2.png
+    - google_play.png
+    - hero-bg.jpg
+    - lf1.png
+    - lf2.ico
+    - lf2.png
+    - lost.jpg
+    - lost.png
+    - menu.png
+    - mobile.png
+    - n1.jpg
+    - n2.jpg
+    - r1.jpg
+    - r2.jpg
+    - r3.jpg
+    - slider-img1.png
+    - slider-img2.png
+    - slider-img3.png
+    - slider-img4.png
+  - instance/
+  - js/
+    - bootstrap.js
+    - custom.js
+    - jquery-3.4.1.min.js
+  - logs/
+    - access.log
+    - access.log.2025-10-08.gz
+    - app.log
+    - app.log.2025-10-08.gz
+    - app.log.2025-10-09.gz
+    - error.log
+    - error.log.2025-10-08.gz
+  - Models/
+    - __pycache__/ (generated)
+    - userModel.py
+  - Routes/
+    - __init__.py
+    - __pycache__/ (generated)
+    - adminRoutes.py
+    - viewRoutes.py
+  - Templates/
+    - about.html
+    - admin_logs.html
+    - base.html
+    - blog.html
+    - css/
+      - bootstrap.css
+      - font-awesome.min.css
+      - responsive.css
+      - style.css
+      - style.css.map
+    - error.html
+    - fonts/
+      - Poppins-Bold.ttf
+      - Poppins-Regular.ttf
+      - Poppins-SemiBold.ttf
+    - footer.html
+    - header.html
+    - index.html
+    - profile.html
+    - scripts.html
+    - testimonial.html
+    - title.html
+  - Utils/
+    - __pycache__/ (generated)
+    - appError.py
+    - auth_decorator.py
+    - db.py
+    - email.py
+    - jwt_utils.py
+    - logger.py
+
+
+Entry: Fixed authentication issues and CSS map 404 errors
+Date: 2025-10-11T18:45:00Z
+
+Summary:
+- Fixed login function response format compatibility issues
+- Fixed forgot password function to prevent email enumeration attacks
+- Resolved 404 errors for bootstrap.css.map files
+- Added missing hash_password method to User model
+- Cleaned up duplicate API endpoints in JavaScript
+
+Changes Since Last Entry:
+- Fixed: Controllers/authController.py (login, register, forgot-password, reset-password response formats)
+- Fixed: app.py (added CSS map file route handler)
+- Fixed: js/custom.js (removed duplicate forgot password handlers, fixed API endpoints)
+- Fixed: Models/userModel.py (added missing hash_password static method)
+
+Technical Details:
+- Login function now returns both 'success' and 'status' fields for frontend compatibility
+- Forgot password function now always returns success to prevent email enumeration
+- CSS map files now return 204 status instead of 404 errors
+- All authentication endpoints now have consistent response formats
+- Removed conflicting API endpoints in JavaScript
+
+Current Project Tree Snapshot:
+
+./
+  - app.py
+  - changelog.txt
+  - Controllers/
+    - __init__.py
+    - __pycache__/ (generated)
+    - adminController.py
+    - authController.py
+    - errorController.py
+    - viewController.py
+  - fonts/
+    - bodoni-svtytwo-sc-itc-tt-book.ttf
+    - fontawesome-webfont.ttf
+    - fontawesome-webfont.woff
+    - fontawesome-webfont.woff2
+  - images/
+    - 544053-200.png
+    - about-img.jpg
+    - app_store.png
+    - app-bg.png
+    - body-bg.jpg
+    - default.jpg
+    - finding.jpg
+    - footer-bg.png
+    - found.png
+    - found2.png
+    - google_play.png
+    - hero-bg.jpg
+    - lf1.png
+    - lf2.ico
+    - lf2.png
+    - lost.jpg
+    - lost.png
+    - menu.png
+    - mobile.png
+    - n1.jpg
+    - n2.jpg
+    - r1.jpg
+    - r2.jpg
+    - r3.jpg
+    - slider-img1.png
+    - slider-img2.png
+    - slider-img3.png
+    - slider-img4.png
+  - instance/
+  - js/
+    - bootstrap.js
+    - custom.js
+    - jquery-3.4.1.min.js
+  - logs/
+    - access.log
+    - access.log.2025-10-08.gz
+    - access.log.2025-10-10.gz
+    - app.log
+    - app.log.2025-10-08.gz
+    - app.log.2025-10-09.gz
+    - app.log.2025-10-10.gz
+    - error.log
+    - error.log.2025-10-08.gz
+    - error.log.2025-10-10.gz
+  - Models/
+    - __pycache__/ (generated)
+    - userModel.py
+  - Routes/
+    - __init__.py
+    - __pycache__/ (generated)
+    - adminRoutes.py
+    - viewRoutes.py
+  - Templates/
+    - about.html
+    - admin_logs.html
+    - base.html
+    - blog.html
+    - css/
+      - bootstrap.css
+      - font-awesome.min.css
+      - responsive.css
+      - style.css
+      - style.css.map
+    - error.html
+    - fonts/
+      - Poppins-Bold.ttf
+      - Poppins-Regular.ttf
+      - Poppins-SemiBold.ttf
+    - footer.html
+    - header.html
+    - index.html
+    - profile.html
+    - scripts.html
+    - testimonial.html
+    - title.html
+  - Utils/
+    - __pycache__/ (generated)
+    - appError.py
+    - auth_decorator.py
+    - db.py
+    - email.py
+    - jwt_utils.py
+    - logger.py
+
+Entry: Fixed authentication issues, register, add phone and edit_profile
+Date: 2025-10-19T19:33:00Z
+
+Summary:
+- Fixed login function response format compatibility issues
+- Changing userModel.py format to include phone and address
+- Added new sign in method to include phone
+- Added new page edit_profile.html and overhaul profile.html
+- Fixed token in edit_profile.html
+
+Changes Since Last Entry:
+- Changed: Models/userModel.py (add phone and address)
+- Fixed: app.py (remove all sqlite elements)
+- Fixed: js/custom.js (redundant DOMContentLoaded)
+
+Technical Details:
+- Login function now be able to use phone to login
+- Token is now carried to edit_profile.html
+- models/userModel.py is now including phone and adress
+- Totally changing profile.html
+- Fix register function
+
+Current Project Tree Snapshot:
+
+./
+  - app.py
+  - changelog.txt
+  - Controllers/
+    - __init__.py
+    - __pycache__/ (generated)
+    - adminController.py
+    - authController.py
+    - errorController.py
+    - viewController.py
+  - fonts/
+    - bodoni-svtytwo-sc-itc-tt-book.ttf
+    - fontawesome-webfont.ttf
+    - fontawesome-webfont.woff
+    - fontawesome-webfont.woff2
+  - images/
+    - 544053-200.png
+    - about-img.jpg
+    - app_store.png
+    - app-bg.png
+    - body-bg.jpg
+    - default.jpg
+    - finding.jpg
+    - footer-bg.png
+    - found.png
+    - found2.png
+    - google_play.png
+    - hero-bg.jpg
+    - lf1.png
+    - lf2.ico
+    - lf2.png
+    - lost.jpg
+    - lost.png
+    - menu.png
+    - mobile.png
+    - n1.jpg
+    - n2.jpg
+    - r1.jpg
+    - r2.jpg
+    - r3.jpg
+    - slider-img1.png
+    - slider-img2.png
+    - slider-img3.png
+    - slider-img4.png
+  - instance/
+  - js/
+    - bootstrap.js
+    - custom.js
+    - jquery-3.4.1.min.js
+  - logs/
+    - access.log
+    - access.log.2025-10-08.gz
+    - access.log.2025-10-10.gz
+    - app.log
+    - app.log.2025-10-08.gz
+    - app.log.2025-10-09.gz
+    - app.log.2025-10-10.gz
+    - error.log
+    - error.log.2025-10-08.gz
+    - error.log.2025-10-10.gz
+  - Models/
+    - __pycache__/ (generated)
+    - userModel.py
+  - Routes/
+    - __init__.py
+    - __pycache__/ (generated)
+    - adminRoutes.py
+    - viewRoutes.py
+  - Templates/
+    - about.html
+    - admin_logs.html
+    - base.html
+    - blog.html
+    - css/
+      - bootstrap.css
+      - font-awesome.min.css
+      - responsive.css
+      - style.css
+      - style.css.map
+    - error.html
+    - fonts/
+      - Poppins-Bold.ttf
+      - Poppins-Regular.ttf
+      - Poppins-SemiBold.ttf
+    - footer.html
+    - header.html
+    - index.html
+    - profile.html
+    - edit_profile.html
+    - scripts.html
+    - testimonial.html
+    - title.html
+  - Utils/
+    - __pycache__/ (generated)
+    - appError.py
+    - auth_decorator.py
+    - db.py
+    - email.py
+    - jwt_utils.py
+    - logger.py
+
+Entry: Search functionality implementation with wireframe-compliant interface
+Date: 2025-01-27T15:30:00Z
+
+Summary:
+- Implemented comprehensive search functionality matching wireframe specifications
+- Added Quick Search and Advanced Search interfaces with authentication requirements
+- Created search results display with pagination and filtering capabilities
+- Integrated backend search API with MongoDB query support
+
+Added Files:
+- Controllers/searchController.py - Complete search API with authentication, filtering, and pagination
+- Routes/searchRoutes.py - Search route definitions for /api/v1/search endpoint
+
+Modified Files:
+- Templates/index.html - Replaced basic search with comprehensive search interface matching wireframe
+- Templates/css/style.css - Added extensive styling for search interface components
+- js/custom.js - Added complete search functionality with form handling, AJAX requests, and results display
+- app.py - Registered search routes blueprint
+
+Key Features Implemented:
+- Quick Search section with keyword input, dropdown options (near me, by venue, lost, found)
+- Advanced Search section with collapsible interface and comprehensive form fields
+- Search results table with Display, Date, Category, Description, Location columns
+- Pagination controls with Previous/Next and page number navigation
+- Zipcode search with radius options (1-1000 kilometres)
+- Authentication requirement enforcement for all search operations
+- Responsive design with mobile-friendly layout
+- Loading spinners and user feedback notifications
+- Text search across multiple fields (title, description, category, location)
+- Status filtering (Lost/Found) and location-based search capabilities
+
+Technical Details:
+- Search API endpoint at /api/v1/search with POST method
+- JWT authentication required for all search operations
+- MongoDB query building with regex search and multiple filter combinations
+- Pagination support (10 items per page) with total count calculation
+- Advanced search includes status, keyword, category, sub-category, and location fields
+- Quick search dropdown auto-populates status field for Lost/Found options
+- Results display includes item thumbnails, formatted dates, and location information
+- Error handling with proper HTTP status codes and user-friendly messages
+- CSS styling with modern design matching brand colors and responsive layout

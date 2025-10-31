@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Admin Log Dashboard{% endblock %}
+
+{% block content %}
+<section class="admin_section layout_padding">
+  <div class="container">
+    <div class="heading_container heading_center mb-5">
+      <h2>📊 Log Activity Dashboard</h2>
+      <p>Monitoring application logs from the past 7 days</p>
+    </div>
+
+    <div id="log-table-container">
+      <div class="alert alert-info text-center">
+        Loading log data...
+      </div>
+    </div>
+
+    <div class="chart-container mt-5">
+      <canvas id="logChart" height="100"></canvas>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+async function loadLogData() {
+  try {
+    const response = await fetch("/admin/logs/data");
+    const data = await response.json();
+
+    const container = document.getElementById("log-table-container");
+
+    if (Object.keys(data).length === 0 || data.error) {
+      container.innerHTML = `
+        <div class="alert alert-warning text-center mt-5">
+          No log data available for the last 7 days.
+        </div>`;
+      return;
+    }
+
+    // Build the table dynamically
+    let tableHTML = `
+      <div class="admin-card">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover text-center admin-table">
+            <thead class="table-dark">
+              <tr>
+                <th>Date</th>
+                <th>INFO</th>
+                <th>WARNING</th>
+                <th>ERROR</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+    for (const [date, counts] of Object.entries(data)) {
+      tableHTML += `
+        <tr>
+          <td>${date}</td>
+          <td>${counts.INFO}</td>
+          <td>${counts.WARNING}</td>
+          <td>${counts.ERROR}</td>
+        </tr>`;
+    }
+
+    tableHTML += `
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+
+    container.innerHTML = tableHTML;
+
+    // Build chart
+    const labels = Object.keys(data);
+    const infoData = labels.map(d => data[d].INFO);
+    const warnData = labels.map(d => data[d].WARNING);
+    const errorData = labels.map(d => data[d].ERROR);
+
+    const ctx = document.getElementById("logChart").getContext("2d");
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          { label: "INFO", data: infoData, borderColor: "#06d6a0", tension: 0.3 },
+          { label: "WARNING", data: warnData, borderColor: "#ffb703", tension: 0.3 },
+          { label: "ERROR", data: errorData, borderColor: "#e63946", tension: 0.3 }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: "bottom" } },
+        scales: { y: { beginAtZero: true, grid: { color: "#ddd" } } }
+      }
+    });
+
+  } catch (err) {
+    document.getElementById("log-table-container").innerHTML = `
+      <div class="alert alert-danger text-center mt-5">
+        Error loading logs: ${err.message}
+      </div>`;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", loadLogData);
+</script>
+{% endblock %}

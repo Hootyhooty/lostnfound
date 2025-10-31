@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-header bg-dark text-white">
+          <h4 class="mb-0">Edit Account Profile</h4>
+        </div>
+        <div class="card-body">
+          <p class="text-muted mb-4">Please change the fields below to update your account profile</p>
+          
+          <form id="editProfileForm">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="email" class="form-label">Email Address</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" readonly>
+                <small class="form-text text-muted">Email cannot be changed</small>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="alternate_email" class="form-label">Alternate Email</label>
+                <input type="email" class="form-control" id="alternate_email" name="alternate_email" value="{{ user.alternate_email or '' }}">
+              </div>
+            </div>
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="first_name" class="form-label">First Name</label>
+                <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name or '' }}">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="last_name" class="form-label">Last Name</label>
+                <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name or '' }}">
+              </div>
+            </div>
+            
+            <!-- Address Section with Location Button -->
+            <div class="mb-4">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="text-muted mb-0">Address Information</h5>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="openLocationMapBtn">
+                  <i class="fa fa-map-marker-alt me-2"></i>Pick Location on Map
+                </button>
+              </div>
+              
+              <div class="mb-3">
+                <label for="address_line1" class="form-label">Address Line 1</label>
+                <input type="text" class="form-control" id="address_line1" name="address_line1" value="{{ user.address_line1 or '' }}">
+              </div>
+            
+            <div class="mb-3">
+              <label for="address_line2" class="form-label">Address Line 2</label>
+              <input type="text" class="form-control" id="address_line2" name="address_line2" value="{{ user.address_line2 or '' }}">
+            </div>
+            
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label for="city" class="form-label">City/Town</label>
+                <input type="text" class="form-control" id="city" name="city" value="{{ user.city or '' }}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="state" class="form-label">State</label>
+                <input type="text" class="form-control" id="state" name="state" value="{{ user.state or '' }}">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="zipcode" class="form-label">Zipcode</label>
+                <input type="text" class="form-control" id="zipcode" name="zipcode" value="{{ user.zipcode or '' }}">
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label for="country" class="form-label">Country</label>
+              <select class="form-control" id="country" name="country">
+                <option value="United States" {% if user.country == 'United States' %}selected{% endif %}>United States</option>
+                <option value="Canada" {% if user.country == 'Canada' %}selected{% endif %}>Canada</option>
+                <option value="United Kingdom" {% if user.country == 'United Kingdom' %}selected{% endif %}>United Kingdom</option>
+                <option value="Australia" {% if user.country == 'Australia' %}selected{% endif %}>Australia</option>
+                <option value="Germany" {% if user.country == 'Germany' %}selected{% endif %}>Germany</option>
+                <option value="France" {% if user.country == 'France' %}selected{% endif %}>France</option>
+                <option value="Other" {% if user.country and user.country not in ['United States', 'Canada', 'United Kingdom', 'Australia', 'Germany', 'France'] %}selected{% endif %}>Other</option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label for="phone" class="form-label">Phone Number</label>
+              <input type="text" class="form-control" id="phone" name="phone" value="{{ user.phone or '' }}">
+            </div>
+            
+            <div class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="display_phone" name="display_phone" {% if user.display_phone %}checked{% endif %}>
+                <label class="form-check-label" for="display_phone">
+                  Display phone number
+                </label>
+              </div>
+            </div>
+            
+            <div class="d-flex gap-2 mb-3">
+              <button type="submit" class="btn btn-success">Update Profile</button>
+              <button type="button" class="btn btn-secondary" onclick="window.history.back()">Cancel</button>
+            </div>
+            
+            <div class="mt-4">
+              <button type="button" class="btn btn-primary" id="deactivateAccountBtn">Deactivate Account</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // Check if user is logged in
+  const token = localStorage.getItem("access_token");
+  console.log("Edit profile page - Token found:", token ? "Yes" : "No");
+  console.log("Token value:", token);
+  if (!token) {
+    alert("You must be logged in to access this page.");
+    window.location.href = "/";
+    return;
+  }
+
+  // Location functionality is now handled by the global map modal
+
+  const form = document.getElementById("editProfileForm");
+  const deactivateBtn = document.getElementById("deactivateAccountBtn");
+  
+  // Handle form submission
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Convert checkbox to boolean
+    data.display_phone = document.getElementById("display_phone").checked;
+    
+    try {
+      // Use the token from the outer scope
+      console.log("Sending request with token:", token ? "Yes" : "No");
+      console.log("Request data:", data);
+      
+      const response = await fetch("/api/v1/users/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      });
+      
+      console.log("Response status:", response.status);
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        alert("Profile updated successfully!");
+        const slug = result?.user?.profile_slug;
+        if (slug) {
+          window.location.href = `/profile/${slug}`;
+        } else {
+          window.location.href = "/";
+        }
+      } else {
+        alert("Error updating profile: " + (result.message || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Error updating profile. Please try again.");
+    }
+  });
+  
+  // Handle account deactivation
+  deactivateBtn.addEventListener("click", async () => {
+    if (confirm("Are you sure you want to deactivate your account? This action cannot be undone.")) {
+      try {
+        console.log("Sending deactivate request with token:", token ? "Yes" : "No");
+        const response = await fetch("/api/v1/users/deactivate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          alert("Account deactivated successfully. You will be logged out.");
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          window.location.href = "/";
+        } else {
+          alert("Error deactivating account: " + (result.message || "Unknown error"));
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Error deactivating account. Please try again.");
+      }
+    }
+  });
+});
+
+// Location functionality is now handled by the global map modal in custom.js
+</script>
+{% endblock %}

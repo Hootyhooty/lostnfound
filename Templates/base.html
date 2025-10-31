@@ -1,0 +1,30 @@
+<!-- base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<!-- Title content -->
+{% include "title.html" %}
+
+<body>
+    <div class="bg">
+    <!-- Header content -->
+    {% include "header.html" %}
+
+    <!-- Main content block for child templates -->
+    {% block content %}{% endblock %}
+
+    <!-- Map Modal moved out; include per-page where needed -->
+
+    <!-- Script content -->
+    {% include "scripts.html" %}
+
+    <!-- Allow page-specific scripts -->
+    {% block scripts %}
+
+    {% endblock %}
+
+    <!-- Footer content -->
+    {% include "footer.html" %}
+        </div>
+    
+</body>
+</html>

@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <!-- Search Section -->
+  <section class="search_section">
+    <div class="container">
+      <!-- Quick Links Section: Center everything -->
+      <div class="row my-4 justify-content-center text-center">
+        <div class="col-md-4 d-flex flex-column align-items-center justify-content-center">
+          <a href="/shop">
+            <img src="images/hooter_logo_nobg.png" style="max-width:180px;width:100%;border-radius:14px;box-shadow:0 2px 9px rgba(0,0,0,0.13);margin:auto;" alt="Shop" />
+            <div class="mt-2 h6 text-success">Visit the Shop</div>
+          </a>
+        </div>
+      </div>
+      <!-- Quick Search Section -->
+      <div class="quick_search_container">
+        <h3 class="search_title">Quick search</h3>
+        
+        <form id="quickSearchForm" class="search_form">
+          <div class="search_row">
+            <div class="search_input_group">
+              <input type="text" class="form-control search_input" id="quickKeyword" placeholder="keyword" required>
+            </div>
+            <div class="search_dropdown_group">
+              <select class="form-control search_dropdown" id="quickSearchType">
+                <option value="">Select search type...</option>
+                <option value="near_me">Searching near me -></option>
+                <option value="by_venue">Searching by venue -></option>
+                <option value="lost">Lost -></option>
+                <option value="found">Found -></option>
+              </select>
+            </div>
+            <div class="search_button_group">
+              <button type="submit" class="btn search_btn">Search</button>
+            </div>
+          </div>
+        </form>
+        
+        <!-- Advanced Search Toggle -->
+        <div class="advanced_search_toggle">
+          <button type="button" class="btn btn-link" id="toggleAdvancedSearch">
+            <i class="fa fa-chevron-down"></i> Advance search
+          </button>
+        </div>
+      </div>
+
+      <!-- Advanced Search Section (Initially Hidden) -->
+      <div class="advanced_search_container" id="advancedSearchContainer" style="display: none;">
+        <div class="advanced_search_form">
+          <form id="advancedSearchForm">
+            <div class="form_row">
+              <div class="form_group">
+                <label for="status">Status</label>
+                <input type="text" class="form-control" id="status" placeholder="Lost or Found">
+              </div>
+              <div class="form_group">
+                <label for="keyword">Keyword</label>
+                <input type="text" class="form-control" id="keyword" placeholder="Search keyword">
+              </div>
+              <div class="form_group">
+                <label for="category">Category</label>
+                <input type="text" class="form-control" id="category" placeholder="Item category">
+              </div>
+              <div class="form_group">
+                <label for="subCategory">Sub category</label>
+                <input type="text" class="form-control" id="subCategory" placeholder="Sub category">
+              </div>
+            </div>
+            
+            <div class="form_row">
+              <div class="form_group">
+                <label for="country">Country</label>
+                <input type="text" class="form-control" id="country" placeholder="Country">
+              </div>
+              <div class="form_group">
+                <label for="state">State</label>
+                <input type="text" class="form-control" id="state" placeholder="State">
+              </div>
+              <div class="form_group">
+                <label for="city">Town/City</label>
+                <input type="text" class="form-control" id="city" placeholder="Town/City">
+              </div>
+              <div class="form_group">
+                <label for="zipcode">Zipcode</label>
+                <input type="text" class="form-control" id="zipcode" placeholder="Zipcode">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="zipcodeOptionsBtn">
+                  Zipcode Code Search Options
+                </button>
+              </div>
+            </div>
+            
+            <!-- Zipcode Search Options (Initially Hidden) -->
+            <div class="zipcode_options" id="zipcodeOptions" style="display: none;">
+              <h5>Search within radius:</h5>
+              <div class="radius_options">
+                <label><input type="radio" name="radius" value="1"> within 1 kilometres</label>
+                <label><input type="radio" name="radius" value="5"> within 5 kilometres</label>
+                <label><input type="radio" name="radius" value="10"> within 10 kilometres</label>
+                <label><input type="radio" name="radius" value="50"> within 50 kilometres</label>
+                <label><input type="radio" name="radius" value="100"> within 100 kilometres</label>
+                <label><input type="radio" name="radius" value="200"> within 200 kilometres</label>
+                <label><input type="radio" name="radius" value="500"> within 500 kilometres</label>
+                <label><input type="radio" name="radius" value="1000"> within 1000 kilometres</label>
+              </div>
+            </div>
+            
+            <div class="search_actions">
+              <button type="submit" class="btn search_btn">Search</button>
+              <small class="form_note">If you don't fill anything it will search all items.</small>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Search Results Section -->
+      <div class="search_results_container" id="searchResults" style="display: none;">
+        <div class="results_header">
+          <h3>Search Results</h3>
+          <div class="results_search_bar">
+            <input type="text" class="form-control" id="resultsKeyword" placeholder="keyword">
+            <button type="button" class="btn btn-sm btn-primary" id="resultsSearchBtn">Search</button>
+          </div>
+        </div>
+        
+        <div class="results_table_container">
+          <table class="table table-striped results_table">
+            <thead>
+              <tr>
+                <th>Display</th>
+                <th>Date</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Location</th>
+              </tr>
+            </thead>
+            <tbody id="resultsTableBody">
+              <!-- Results will be populated here -->
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="pagination_container">
+          <nav aria-label="Search results pagination">
+            <ul class="pagination justify-content-center" id="resultsPagination">
+              <!-- Pagination will be populated here -->
+            </ul>
+          </nav>
+        </div>
+      </div>
+
+      <!-- reports and shop content -->
+      <div class="row justify-content-center text-center" style="margin-top:32px;">
+        <div class="col-md-4 d-flex flex-column align-items-center justify-content-center mb-4">
+          <div class="box" style="max-width:190px;margin:auto;">
+            <div class="img-box">
+              <a id="boxReportLink" href="#">
+                <img src="images/lovepik-report-card.png" class="box-img" style="max-width:110px;width:100%;margin:auto;display:block;" alt="">
+                <div class="mt-2 h6 text-success">Report Items</div>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 d-flex flex-column align-items-center justify-content-center mb-4">
+          <div class="box" style="max-width:190px;margin:auto;">
+            <div class="img-box">
+              <a id="boxShopLink" href="/shop">
+                <img src="images/ceee.png" class="box-img" style="max-width:110px;width:100%;margin:auto;display:block;" alt="">
+                <div class="mt-2 h6 text-success">Visit the Shop</div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- end news section -->
+{% endblock %}
