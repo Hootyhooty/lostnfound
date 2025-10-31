@@ -184,4 +184,6 @@ def get_uploaded_image(filename):
 # Run the app
 # ----------------------------
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.getenv('PORT', 4000))
+    print(f"App running on port {port}...")
+    app.run(host='0.0.0.0', port=port, debug=False)
