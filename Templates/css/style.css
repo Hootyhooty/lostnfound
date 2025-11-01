@@ -935,15 +935,15 @@ a:focus {
 
 /* Quick Search Container */
 .quick_search_container {
-  border-radius: 15px;
+  border: none;
   padding: 30px;
   margin-bottom: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
 }
 
 .search_title {
-  color: #1E3A8A;
-  font-size: 24px;
+  color: #080707;
+  font-size: 30px;
   font-weight: bold;
   margin-bottom: 15px;
   text-align: center;
@@ -991,7 +991,7 @@ a:focus {
   border-radius: 8px;
   border: 2px solid #e9ecef;
   padding: 0 15px;
-  font-size: 16px;
+  font-size: 20px;
   transition: all 0.3s ease;
 }
 
@@ -1026,9 +1026,9 @@ a:focus {
 }
 
 .advanced_search_toggle .btn-link {
-  color: #1E3A8A;
+  color: #080707;
   text-decoration: none;
-  font-size: 16px;
+  font-size: 30px;
   font-weight: 600;
 }
 
