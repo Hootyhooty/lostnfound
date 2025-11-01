@@ -942,7 +942,7 @@ a:focus {
 }
 
 .search_title {
-  color: #080707;
+  color: #1E3A8A;
   font-size: 30px;
   font-weight: bold;
   margin-bottom: 15px;
@@ -1026,14 +1026,14 @@ a:focus {
 }
 
 .advanced_search_toggle .btn-link {
-  color: #080707;
+  color: #4B6EC2;
   text-decoration: none;
   font-size: 30px;
   font-weight: 600;
 }
 
 .advanced_search_toggle .btn-link:hover {
-  color: #1a365d;
+  color: #8098D6;
   text-decoration: underline;
 }
 
