@@ -177,6 +177,7 @@ a:focus {
   align-items: center;
   margin-left: auto;
   margin-right: 75px;
+  border:none;
 }
 
 .User_option a {
@@ -430,6 +431,7 @@ a:focus {
 
 .footer_section a {
   color: #ffe537;
+  border: none;
 }
 
 /* SEARCH BAR */
@@ -911,12 +913,25 @@ a:focus {
   background: rgba(255, 255, 255, 0.2) !important;
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  padding: 6px 0;
 }
 .user-dropdown-custom .dropdown-item {
   color: #fff !important;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: calc(100% - 16px); /* 👈 keeps hover background away from right edge */
+  margin: 3px auto;         /* 👈 centers each item nicely */
+  padding: 10px 14px;
+  border-radius: 8px;
+  transition: all 0.25s ease;
 }
 .user-dropdown-custom .dropdown-item:hover {
-  background: rgba(255,255,255,0.25);
+  background: rgba(255, 255, 255, 0.35); /* 👈 brighter hover highlight */
+  color: #1E3A8A !important;             /* 👈 deep blue text for contrast */
+  transform: translateX(2px);            /* optional subtle movement */
 }
 
 .mb-0-padding{
