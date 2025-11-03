@@ -1,11 +1,12 @@
 import logging
-from flask import render_template, Blueprint
+from flask import render_template, Blueprint, request
 from Models.userModel import User
 from Utils.appError import AppError
 from Models.lostItemModel import LostItem
 from Models.messageModel import Message
 from Utils.hashid_utils import decode_slug, encode_object_id
 from Utils.auth_decorator import token_required
+from Models.testimonialModel import Testimonial
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,31 @@ def blog():
 
 @view_bp.route("/testimonial")
 def testimonial():
-    return render_template("testimonial.html")
+    # Show 4 random testimonials each visit
+    try:
+        limit = int(request.args.get('limit', 6))
+    except Exception:
+        limit = 4
+
+    # Use aggregation $sample for randomness
+    samples = list(Testimonial.objects.aggregate({"$sample": {"size": limit}}))
+
+    # Enrich with user fields needed by template
+    testimonials = []
+    for doc in samples:
+        # doc is a raw dict from aggregation; fetch full document for dereferencing user
+        t = Testimonial.objects(id=doc.get('_id')).first()
+        if not t or not t.is_public:
+            continue
+        testimonials.append({
+            "id": str(t.id),
+            "message": t.message,
+            "user_name": getattr(t.user, 'name', 'Anonymous'),
+            "user_photo": getattr(t.user, 'photo', 'default.jpg'),
+            "created_at": t.created_at
+        })
+
+    return render_template("testimonial.html", testimonials=testimonials)
 
 # ✅ Profile route using slug instead of ID
 @view_bp.route("/profile/<slug>")

@@ -17,6 +17,7 @@ from Routes.userRoutes import user_routes, auth_routes
 from Routes.lostItemRoutes import lost_item_routes
 from Routes.searchRoutes import search_routes
 from Routes.messageRoutes import message_routes
+from Routes.testimonialRoutes import api_testimonial_routes
 from Utils.appError import AppError
 
 #initialize database first
@@ -99,6 +100,7 @@ app.register_blueprint(user_routes)
 app.register_blueprint(lost_item_routes)
 app.register_blueprint(search_routes)
 app.register_blueprint(message_routes)
+app.register_blueprint(api_testimonial_routes)
 
 
 # ----------------------------

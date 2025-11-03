@@ -58,6 +58,40 @@ body {
 .layout_padding {
   padding: 90px 0;
 }
+
+/* ==========================
+   Testimonial page styles
+   ========================== */
+.testimonial-card {
+  border: none;
+  border-radius: 1.5rem;
+  background-color: #ffffffcc;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  word-wrap: break-word;
+  overflow: hidden;
+}
+.testimonial-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+.testimonial-card .message-text {
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  max-width: 90%;
+  line-height: 1.5;
+  margin: 0;
+}
+.testimonial-card img {
+  border: 3px solid rgba(255, 255, 255, 0.8);
+}
+@media (max-width: 768px) {
+  .testimonial-card {
+    border-radius: 1rem;
+    padding: 1rem;
+  }
+}
 .layout_padding2 {
   padding: 75px 0;
 }

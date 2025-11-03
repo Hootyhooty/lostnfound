@@ -1,6 +1,46 @@
 Changelog - Lost&Found
 ====================================
 
+Entry: Testimonial system (model, API, modal UI) and style cleanup
+Date: 2025-11-03T00:00:00Z
+
+Summary:
+- Implemented testimonials feature backed by MongoDB collection `testimonial`.
+- Added create/upsert API and current-user fetch; integrated with view to show random testimonials.
+- Converted inline testimonial form to a Bootstrap modal ("Leave/Edit your testimonial").
+- Moved inline CSS from template to `Templates/css/style.css`.
+- Increased default testimonials displayed from 4 to 6.
+
+New/Modified Endpoints:
+- POST `/api/testimonials` (auth required): Create or replace current user's testimonial (upsert).
+- GET  `/api/testimonials` (internal/list): Supports `?limit=<n>` and random sampling.
+- GET  `/api/testimonials/me` (auth required): Get current user's testimonial if exists.
+- View `/testimonial`: Renders random set (now default 6) and modal trigger.
+
+Database:
+- New model `Models/testimonialModel.py` with fields: user (ref), message, is_public, created_at.
+- Collection name: `testimonial` in `lostnfound_db`.
+
+UI/Template Changes:
+- `Templates/testimonial.html`:
+  - Replaced right-side inline form with modal `#testimonialModal`.
+  - Button text toggles between "Leave your testimonial" and "Edit your testimonial" based on user having an existing message; modal pre-fills when editing.
+  - List shows 6 testimonial cards by default.
+- `Templates/css/style.css`: Added `.testimonial-card` and `.message-text` styles (moved from template).
+
+Code Changes:
+- Added: `Controllers/testimonialController.py` (API routes and upsert logic).
+- Added: `Routes/testimonialRoutes.py` (blueprint export and app registration).
+- Modified: `app.py` (register testimonial API blueprint).
+- Modified: `Controllers/viewController.py` (fetch random testimonials; default limit=6).
+- Added: `Models/testimonialModel.py` (Testimonial document with indexes).
+- Modified: `Templates/testimonial.html` (modal UI, remove side form, button, scripts).
+- Modified: `Templates/css/style.css` (testimonial styles section).
+
+Notes:
+- Modal uses Bootstrap 5 attributes (`data-bs-toggle`, `data-bs-target`, `btn-close`).
+- Client JS handles auth-required cases (401) and updates the list immediately after submit.
+
 Entry: Shop Basket System, Login Requirement, Homepage Alignment, and UI/UX Improvements
 Date: 2025-10-30T00:00:00Z
 
