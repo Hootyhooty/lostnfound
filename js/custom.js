@@ -444,9 +444,22 @@ function handleLoginSuccess(user) {
       : "../images/default.jpg";
   }
 
-  // ✅ Use profile_slug for profile page
-  if (profileLink && user.profile_slug) {
-    profileLink.href = `/profile/${user.profile_slug}`;
+  // ✅ Set profile link - admins go to admin page, others go to profile
+  if (profileLink) {
+    let userRole = user.role;
+    if (userRole && typeof userRole === 'object' && userRole.value) {
+      userRole = userRole.value;
+    }
+    
+    if (userRole === "admin") {
+      // Admin users go to admin dashboard
+      profileLink.href = "/admin";
+      profileLink.textContent = "Admin Dashboard"; // Update link text for clarity
+    } else if (user.profile_slug) {
+      // Regular users go to their profile page
+      profileLink.href = `/profile/${user.profile_slug}`;
+      profileLink.textContent = "Profile"; // Ensure text is correct for regular users
+    }
   }
 }
 

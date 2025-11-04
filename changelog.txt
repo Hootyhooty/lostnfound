@@ -1,6 +1,110 @@
 Changelog - Lost&Found
 ====================================
 
+Entry: Comprehensive Admin Dashboard with Role-Based Access Control
+Date: 2025-01-XXT00:00:00Z
+
+Summary:
+- Implemented full-featured admin dashboard with sidebar navigation and role-based access control.
+- Enhanced admin logs page with advanced filtering, summary cards, and CSV export.
+- Added role-based redirects: admin users automatically redirected to admin dashboard after login and when clicking profile.
+- Secured all admin endpoints with authentication and role verification decorators.
+- Added admin APIs for managing users, items, testimonials, and sending emails.
+
+New/Modified Endpoints:
+- GET `/admin`: Main admin dashboard (admin role required).
+- GET `/admin/logs`: Enhanced log dashboard with filters.
+- GET `/admin/logs/data`: JSON endpoint with query params (days, level, start_date, end_date).
+- GET/POST `/admin/api/users`: List all users or create new user.
+- DELETE `/admin/api/users/<user_id>`: Delete user.
+- GET `/admin/api/items`: List all lost/found items.
+- DELETE `/admin/api/items/<item_id>`: Delete item.
+- GET `/admin/api/testimonials`: List all testimonials.
+- DELETE `/admin/api/testimonials/<tid>`: Delete testimonial.
+- POST `/admin/api/send-email`: Send email via SMTP.
+
+UI/Template Changes:
+- Added: `Templates/admin_dashboard.html`:
+  - Sidebar navigation (Users, Items, Testimonials, Send Email, Logs).
+  - Admin profile display with photo, username, and email above tables.
+  - Dynamic content area that loads different sections based on sidebar selection.
+  - Translucent white table backgrounds (rgba(255, 255, 255, 0.8)) for better visibility.
+  
+- Modified: `Templates/admin_logs.html`:
+  - Added filter controls (date range, log level, quick range selector).
+  - Added summary cards displaying INFO, WARNING, and ERROR totals.
+  - Added CSV export functionality.
+  - Improved chart rendering with proper instance management.
+
+- Modified: `Templates/error.html`:
+  - Added context-aware error messages based on error code (401, 403, 404).
+  - Clear messages for authentication and authorization errors.
+
+- Modified: `js/custom.js`:
+  - Admin users: Profile link redirects to `/admin` and displays "Admin Dashboard".
+  - Regular users: Profile link behavior unchanged.
+  - Role-based redirect after login for admin users.
+
+Code Changes:
+- Added: `Controllers/adminController.py`:
+  - `admin_dashboard_page()`: Main dashboard view (admin role required).
+  - `admin_users_api()`: List/create users.
+  - `admin_user_delete()`: Delete user.
+  - `admin_items_api()`: List items.
+  - `admin_item_delete()`: Delete item.
+  - `admin_testimonials_api()`: List testimonials.
+  - `admin_testimonial_delete()`: Delete testimonial.
+  - `admin_send_email()`: Send email functionality.
+  - Enhanced `parse_logs()`: Supports date range and level filtering.
+  - Enhanced `get_logs_json()`: Returns summary and totals with filter support.
+
+- Modified: `Routes/adminRoutes.py`:
+  - Added all new admin dashboard and API routes.
+  - Organized routes with clear grouping.
+
+- Modified: `Utils/auth_decorator.py`:
+  - Enhanced `token_required()`: Detects API vs HTML requests, returns appropriate responses.
+  - Enhanced `roles_required()`: Returns error pages for unauthorized HTML requests, JSON for API.
+  - Handles 401 (authentication required) and 403 (access denied) errors with user-friendly messages.
+
+- Modified: `Controllers/authController.py`:
+  - Login response includes user role information for client-side redirect logic.
+
+Security:
+- All admin routes protected with `@roles_required("admin")` decorator.
+- Unauthorized users redirected to error page (403) instead of JSON response.
+- Token validation from cookies or Authorization header.
+- Session validation on page load via `checkUserSession()`.
+
+Features:
+- Admin Dashboard:
+  - Sidebar navigation with active state management.
+  - Users management: View all users, add new users, delete users.
+  - Items management: View all lost/found items, delete items.
+  - Testimonials management: View all testimonials, delete testimonials.
+  - Email sending: Simple form interface for sending emails via SMTP.
+  - Logs: Link to enhanced log dashboard.
+  
+- Enhanced Log Dashboard:
+  - Date range filtering (quick select: 1, 3, 7, 14, 30 days or custom dates).
+  - Log level filtering (INFO, WARNING, ERROR, or All).
+  - Summary cards showing totals for each log level.
+  - Interactive charts with Chart.js.
+  - CSV export functionality.
+  - Real-time data loading via JSON endpoint.
+
+- Role-Based Navigation:
+  - Admin users automatically redirected to `/admin` after login.
+  - Admin profile link points to admin dashboard instead of profile page.
+  - Link text changes to "Admin Dashboard" for clarity.
+
+Notes:
+- Admin dashboard uses Bootstrap 5 for responsive layout.
+- Tables use translucent white backgrounds for better readability.
+- All admin operations require authentication and admin role.
+- Email functionality uses SMTP debug server (configurable via environment variables).
+- Log parsing supports both plain text and gzipped log files.
+
 Entry: Testimonial system (model, API, modal UI) and style cleanup
 Date: 2025-11-03T00:00:00Z
 
