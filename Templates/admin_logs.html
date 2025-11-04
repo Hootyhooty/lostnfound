@@ -9,6 +9,68 @@
       <p>Monitoring application logs from the past 7 days</p>
     </div>
 
+    <div class="row g-3 mb-4">
+      <div class="col-md-3">
+        <label class="form-label">Quick Range</label>
+        <select id="daysSelect" class="form-select">
+          <option value="1">Last 1 day</option>
+          <option value="3">Last 3 days</option>
+          <option value="7" selected>Last 7 days</option>
+          <option value="14">Last 14 days</option>
+          <option value="30">Last 30 days</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Level</label>
+        <select id="levelSelect" class="form-select">
+          <option value="">All</option>
+          <option value="INFO">INFO</option>
+          <option value="WARNING">WARNING</option>
+          <option value="ERROR">ERROR</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Start date</label>
+        <input id="startDate" type="date" class="form-control" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">End date</label>
+        <input id="endDate" type="date" class="form-control" />
+      </div>
+      <div class="col-12 d-flex gap-2 mt-2">
+        <button id="applyFilters" class="btn btn-primary">Apply</button>
+        <button id="resetFilters" class="btn btn-outline-secondary">Reset</button>
+        <button id="exportCsv" class="btn btn-outline-success ms-auto">Export CSV</button>
+      </div>
+    </div>
+
+    <div class="row" id="summary-cards" style="display:none;">
+      <div class="col-md-4 mb-3">
+        <div class="card text-bg-light h-100">
+          <div class="card-body">
+            <h6 class="card-title mb-2">INFO</h6>
+            <div class="display-6" id="infoTotal">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-3">
+        <div class="card text-bg-light h-100">
+          <div class="card-body">
+            <h6 class="card-title mb-2">WARNING</h6>
+            <div class="display-6" id="warnTotal">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-3">
+        <div class="card text-bg-light h-100">
+          <div class="card-body">
+            <h6 class="card-title mb-2">ERROR</h6>
+            <div class="display-6" id="errorTotal">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="log-table-container">
       <div class="alert alert-info text-center">
         Loading log data...
@@ -25,20 +87,50 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+function buildQueryParams() {
+  const params = new URLSearchParams();
+  const days = document.getElementById("daysSelect").value;
+  const level = document.getElementById("levelSelect").value;
+  const start = document.getElementById("startDate").value;
+  const end = document.getElementById("endDate").value;
+
+  if (start || end) {
+    if (start) params.set("start_date", start);
+    if (end) params.set("end_date", end);
+  } else {
+    params.set("days", days || "7");
+  }
+  if (level) params.set("level", level);
+  return params.toString();
+}
+
+let chartInstance = null;
+
 async function loadLogData() {
   try {
-    const response = await fetch("/admin/logs/data");
-    const data = await response.json();
+    const qs = buildQueryParams();
+    const response = await fetch(`/admin/logs/data?${qs}`);
+    const payload = await response.json();
 
     const container = document.getElementById("log-table-container");
 
-    if (Object.keys(data).length === 0 || data.error) {
+    if (!payload || payload.error) {
       container.innerHTML = `
         <div class="alert alert-warning text-center mt-5">
           No log data available for the last 7 days.
         </div>`;
+      document.getElementById("summary-cards").style.display = "none";
       return;
     }
+
+    const data = payload.summary || {};
+    const totals = payload.totals || { INFO: 0, WARNING: 0, ERROR: 0 };
+
+    // Update totals cards
+    document.getElementById("summary-cards").style.display = "flex";
+    document.getElementById("infoTotal").textContent = totals.INFO || 0;
+    document.getElementById("warnTotal").textContent = totals.WARNING || 0;
+    document.getElementById("errorTotal").textContent = totals.ERROR || 0;
 
     // Build the table dynamically
     let tableHTML = `
@@ -80,7 +172,10 @@ async function loadLogData() {
     const errorData = labels.map(d => data[d].ERROR);
 
     const ctx = document.getElementById("logChart").getContext("2d");
-    new Chart(ctx, {
+    if (chartInstance) {
+      chartInstance.destroy();
+    }
+    chartInstance = new Chart(ctx, {
       type: "line",
       data: {
         labels,
@@ -105,6 +200,40 @@ async function loadLogData() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", loadLogData);
+function resetFilters() {
+  document.getElementById("daysSelect").value = "7";
+  document.getElementById("levelSelect").value = "";
+  document.getElementById("startDate").value = "";
+  document.getElementById("endDate").value = "";
+}
+
+function exportCsvFromData(summary) {
+  const rows = [["Date","INFO","WARNING","ERROR"]];
+  Object.entries(summary).forEach(([date, counts]) => {
+    rows.push([date, counts.INFO || 0, counts.WARNING || 0, counts.ERROR || 0]);
+  });
+  const csv = rows.map(r => r.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `logs_export_${Date.now()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadLogData();
+  document.getElementById("applyFilters").addEventListener("click", () => loadLogData());
+  document.getElementById("resetFilters").addEventListener("click", () => { resetFilters(); loadLogData(); });
+  document.getElementById("exportCsv").addEventListener("click", async () => {
+    const qs = buildQueryParams();
+    const response = await fetch(`/admin/logs/data?${qs}`);
+    const payload = await response.json();
+    if (payload && payload.summary) {
+      exportCsvFromData(payload.summary);
+    }
+  });
+});
 </script>
 {% endblock %}
