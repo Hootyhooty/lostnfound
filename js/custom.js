@@ -230,6 +230,19 @@ document.addEventListener("DOMContentLoaded", () => {
           // Prefer server's returned user object; otherwise call /me
           if (data.user) {
             handleLoginSuccess(data.user);
+            // Check if user is admin and redirect
+            let userRole = data.user.role;
+            if (userRole && typeof userRole === 'object' && userRole.value) {
+              userRole = userRole.value;
+            }
+            if (userRole === "admin") {
+              hideModal("loginModal");
+              showToast("✅ Login successful! Redirecting to admin dashboard...", "success");
+              setTimeout(() => {
+                window.location.href = "/admin";
+              }, 1000);
+              return;
+            }
           } else {
             await checkUserSession();
           }

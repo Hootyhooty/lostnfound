@@ -4,6 +4,7 @@ import re
 from datetime import datetime, timedelta
 from collections import defaultdict
 from flask import render_template, flash, jsonify
+from Utils.auth_decorator import roles_required
 
 LOG_PATTERN = re.compile(r"^(\d{4}-\d{2}-\d{2}) .* \[(INFO|ERROR|WARNING)\]")
 
@@ -131,9 +132,12 @@ def get_logs_json():
 # =============================
 # Admin Dashboard and API
 # =============================
-def admin_dashboard_page():
-    """Render the unified admin dashboard with sidebar navigation."""
-    return render_template("admin_dashboard.html")
+@roles_required("admin")
+def admin_dashboard_page(user):
+    """Render the unified admin dashboard with sidebar navigation.
+    Requires admin role - enforced by @roles_required decorator."""
+    # User is already authenticated and verified as admin by the decorator
+    return render_template("admin_dashboard.html", admin_user=user)
 
 
 def _safe_obj_id(obj):

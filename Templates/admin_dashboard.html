@@ -18,6 +18,33 @@
 
       <!-- Main content area -->
       <div class="col-12 col-md-9 col-lg-10">
+        <!-- Admin Profile Info -->
+        {% if admin_user %}
+        <div class="mb-4 p-3" style="background: rgba(255, 255, 255, 0.8); border-radius: 8px; border: 1px solid #ddd;">
+          <div class="d-flex align-items-center">
+            <div style="width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 2px solid #ddd; margin-right: 20px; flex-shrink: 0;">
+              {% if admin_user.photo and admin_user.photo != 'default.jpg' %}
+                <img src="/uploads/{{ admin_user.photo }}" 
+                     alt="Admin" 
+                     style="width: 100%; height: 100%; object-fit: cover;">
+              {% else %}
+                <img src="{{ url_for('static', filename='images/default.jpg') }}" 
+                     alt="Admin" 
+                     style="width: 100%; height: 100%; object-fit: cover;">
+              {% endif %}
+            </div>
+            <div>
+              <div style="margin-bottom: 8px;">
+                <strong>Username:</strong> {{ admin_user.name or 'N/A' }}
+              </div>
+              <div>
+                <strong>Email:</strong> {{ admin_user.email or 'N/A' }}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        
         <div id="sectionHeader" class="d-flex align-items-center justify-content-between mb-3">
           <h4 class="m-0">Users</h4>
           <div id="sectionActions"></div>
@@ -33,6 +60,17 @@
 {% endblock %}
 
 {% block scripts %}
+<style>
+.admin-table-translucent {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}
+.admin-table-translucent tbody tr {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}
+.admin-table-translucent tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+</style>
 <script>
 async function fetchJSON(url, options) {
   const res = await fetch(url, options);
@@ -48,7 +86,7 @@ function setActive(button) {
 function renderTable(headers, rows) {
   const thead = `<thead class="table-dark"><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>`;
   const tbody = `<tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>`;
-  return `<div class="table-responsive"><table class="table table-bordered table-hover text-center">${thead}${tbody}</table></div>`;
+  return `<div class="table-responsive"><table class="table table-bordered table-hover text-center admin-table-translucent">${thead}${tbody}</table></div>`;
 }
 
 async function loadUsers() {
