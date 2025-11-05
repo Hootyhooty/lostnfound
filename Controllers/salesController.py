@@ -12,12 +12,8 @@ try:
 except Exception:
     stripe = None
 
-try:
-    from paypalcheckoutsdk.orders import OrdersCreateRequest, OrdersCaptureRequest
-    from paypalcheckoutsdk.core import PayPalHttpClient, SandboxEnvironment, LiveEnvironment
-except Exception:
-    OrdersCreateRequest = OrdersCaptureRequest = None
-    PayPalHttpClient = SandboxEnvironment = LiveEnvironment = None
+import base64
+import httpx
 
 from Utils.catalog import validate_and_price_items
 
@@ -112,17 +108,23 @@ def stripe_success():
 # ============================
 # PayPal Orders v2
 # ============================
-def _paypal_client():
-    env = os.getenv('PAYPAL_ENV', 'sandbox').lower()
+def _paypal_base_url():
+    return 'https://api-m.paypal.com' if os.getenv('PAYPAL_ENV','sandbox').lower() == 'live' else 'https://api-m.sandbox.paypal.com'
+
+def _paypal_token():
     client_id = os.getenv('PAYPAL_CLIENT_ID')
     client_secret = os.getenv('PAYPAL_CLIENT_SECRET')
     if not client_id or not client_secret:
         return None
-    if env == 'live':
-        environment = LiveEnvironment(client_id=client_id, client_secret=client_secret)
-    else:
-        environment = SandboxEnvironment(client_id=client_id, client_secret=client_secret)
-    return PayPalHttpClient(environment)
+    auth = base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()
+    url = f"{_paypal_base_url()}/v1/oauth2/token"
+    with httpx.Client(timeout=15.0) as c:
+        r = c.post(url, headers={
+            'Authorization': f'Basic {auth}',
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }, data={'grant_type':'client_credentials'})
+        r.raise_for_status()
+        return r.json().get('access_token')
 
 
 def paypal_create_order():
@@ -135,15 +137,12 @@ def paypal_create_order():
     total_price = total_cents / 100.0
     items_json = [json.dumps(it) for it in validated_items]
 
-    client = _paypal_client()
-    if client is None:
+    token = _paypal_token()
+    if not token:
         return jsonify({'error': 'PayPal not configured'}), 500
-
-    req = OrdersCreateRequest()
-    req.prefer('return=representation')
     return_url = f"{request.host_url.rstrip('/')}/paypal/return"
     cancel_url = f"{request.host_url.rstrip('/')}/shop?paid=paypal_cancel"
-    req.request_body({
+    body = {
         'intent': 'CAPTURE',
         'purchase_units': [{
             'amount': {'currency_code': 'USD', 'value': f"{total_price:.2f}"}
@@ -153,43 +152,57 @@ def paypal_create_order():
             'return_url': return_url,
             'cancel_url': cancel_url
         }
-    })
+    }
     try:
-        resp = client.execute(req)
-        order_id = resp.result.id
-        approve_url = next((l.href for l in resp.result.links if l.rel == 'approve'), None)
-        sale = Sale(items=items_json, total_price=total_price, created_at=datetime.utcnow(), status='pending', payment_method='paypal', paypal_id=order_id)
-        sale.save()
-        return jsonify({'id': order_id, 'approve_url': approve_url})
+        with httpx.Client(timeout=15.0) as c:
+            r = c.post(f"{_paypal_base_url()}/v2/checkout/orders", headers={
+                'Authorization': f'Bearer {token}',
+                'Content-Type': 'application/json'
+            }, json=body)
+            r.raise_for_status()
+            data = r.json()
+            order_id = data.get('id')
+            approve_url = None
+            for link in data.get('links', []):
+                if link.get('rel') == 'approve':
+                    approve_url = link.get('href')
+                    break
+            sale = Sale(items=items_json, total_price=total_price, created_at=datetime.utcnow(), status='pending', payment_method='paypal', paypal_id=order_id)
+            sale.save()
+            return jsonify({'id': order_id, 'approve_url': approve_url})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
 def paypal_return():
-    client = _paypal_client()
-    if client is None:
+    token = _paypal_token()
+    if not token:
         return redirect('/shop?paid=paypal_error')
     order_id = request.args.get('token') or request.args.get('orderId') or request.args.get('orderID')
     if not order_id:
         return redirect('/shop?paid=paypal_error')
     try:
-        capture = client.execute(OrdersCaptureRequest(order_id))
-        status = getattr(capture.result, 'status', '')
-        sale = Sale.objects(paypal_id=order_id).first()
-        if status == 'COMPLETED' and sale:
-            # Extract capture id for auditing
-            cap_id = None
-            try:
-                pu = capture.result.purchase_units[0]
-                cap_id = pu.payments.captures[0].id
-            except Exception:
+        with httpx.Client(timeout=15.0) as c:
+            r = c.post(f"{_paypal_base_url()}/v2/checkout/orders/{order_id}/capture", headers={
+                'Authorization': f'Bearer {token}',
+                'Content-Type': 'application/json'
+            })
+            r.raise_for_status()
+            data = r.json()
+            status = data.get('status', '')
+            sale = Sale.objects(paypal_id=order_id).first()
+            if status == 'COMPLETED' and sale:
                 cap_id = None
-            sale.status = 'paid'
-            if cap_id:
-                sale.paypal_capture_id = cap_id
-            sale.save()
-            return redirect('/shop?paid=paypal_success')
-        return redirect('/shop?paid=paypal_error')
+                try:
+                    cap_id = data['purchase_units'][0]['payments']['captures'][0]['id']
+                except Exception:
+                    cap_id = None
+                sale.status = 'paid'
+                if cap_id:
+                    sale.paypal_capture_id = cap_id
+                sale.save()
+                return redirect('/shop?paid=paypal_success')
+            return redirect('/shop?paid=paypal_error')
     except Exception:
         return redirect('/shop?paid=paypal_error')
 
