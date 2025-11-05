@@ -145,6 +145,47 @@ Notes:
 - Modal uses Bootstrap 5 attributes (`data-bs-toggle`, `data-bs-target`, `btn-close`).
 - Client JS handles auth-required cases (401) and updates the list immediately after submit.
 
+Entry: Payments hardening: Stripe webhook, server-side pricing, PayPal REST
+Date: 2025-11-05T00:00:00Z
+
+Summary:
+- Added Stripe webhook at `/webhook` to confirm payments server-side.
+- Implemented server-side product catalog validation; no longer trust client item prices.
+- Switched PayPal integration to direct REST (OAuth2, Orders create/capture) using `httpx`.
+- Persist Stripe charge IDs and PayPal capture IDs on `Sale` for auditing.
+- Fixed missing route causing 405 by adding `/api/v1/sales` alias.
+- Added Stripe SDK dependency; removed PayPal SDK dependency.
+
+New/Modified Endpoints:
+- POST `/api/checkout/stripe`: Creates Stripe Checkout Session using server-validated prices.
+- POST `/webhook`: Stripe webhook (verifies signature via `STRIPE_WEBHOOK_SECRET`).
+- POST `/api/paypal/create-order`: Creates PayPal order via REST; returns approval URL.
+- GET  `/paypal/return`: Captures PayPal order via REST; records capture ID and marks sale paid.
+- POST `/api/v1/sales`: Alias for sale creation to avoid 405s.
+
+Database:
+- `Models/salesModel.py`: Added fields `stripe_charge_id`, `paypal_capture_id`.
+
+Code Changes:
+- Modified: `Controllers/salesController.py`
+  - Stripe: validate items, add `payment_intent_data.metadata`, webhook handler to reconcile and store charge ID.
+  - PayPal: remove SDK usage; implement OAuth2 token retrieval and Orders create/capture via REST.
+- Modified: `Routes/adminRoutes.py`
+  - Add `/webhook` and `/api/v1/sales` routes.
+- Added: `Utils/catalog.py` with catalog and `validate_and_price_items()`.
+- Modified: `requirements.txt`
+  - Add `stripe`; remove `paypalcheckoutsdk`.
+
+Environment Variables:
+- `STRIPE_SECRET_KEY` (required)
+- `STRIPE_WEBHOOK_SECRET` (required)
+- `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET` (required)
+- `PAYPAL_ENV` = `sandbox` or `live`
+
+Notes:
+- Webhook must be reachable from Stripe; verify endpoint secret.
+- Client-side price is ignored; catalog defines authoritative pricing.
+
 Entry: Shop Basket System, Login Requirement, Homepage Alignment, and UI/UX Improvements
 Date: 2025-10-30T00:00:00Z
 
