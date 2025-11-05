@@ -18,6 +18,9 @@ class Sale(Document):
     payment_method = StringField()  # e.g. 'paypal', 'stripe'
     paypal_id = StringField()
     stripe_id = StringField()
+    # Auditing identifiers
+    paypal_capture_id = StringField()
+    stripe_charge_id = StringField()
 
     meta = {
         'collection': 'sales',

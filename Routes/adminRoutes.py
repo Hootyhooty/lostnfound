@@ -7,7 +7,7 @@ from Controllers.adminController import (
     admin_testimonials_api, admin_testimonial_delete, admin_testimonial_toggle_public,
     admin_send_email
 )
-from Controllers.salesController import create_sale, create_stripe_checkout, paypal_create_order, paypal_return, stripe_success
+from Controllers.salesController import create_sale, create_stripe_checkout, paypal_create_order, paypal_return, stripe_success, stripe_webhook
 
 admin_routes = Blueprint("admin_routes", __name__)
 
@@ -20,10 +20,12 @@ admin_routes.add_url_rule("/admin/logs/data", view_func=get_logs_json, methods=[
 admin_routes.add_url_rule("/admin/logs/text", view_func=get_logs_text, methods=["GET"])
 
 admin_routes.add_url_rule('/sales', view_func=create_sale, methods=['POST'])
+admin_routes.add_url_rule('/api/v1/sales', view_func=create_sale, methods=['POST'])
 admin_routes.add_url_rule('/api/checkout/stripe', view_func=create_stripe_checkout, methods=['POST'])
 admin_routes.add_url_rule('/api/paypal/create-order', view_func=paypal_create_order, methods=['POST'])
 admin_routes.add_url_rule('/paypal/return', view_func=paypal_return, methods=['GET'])
 admin_routes.add_url_rule('/stripe/success', view_func=stripe_success, methods=['GET'])
+admin_routes.add_url_rule('/webhook', view_func=stripe_webhook, methods=['POST'])
 
 # Admin APIs
 admin_routes.add_url_rule('/admin/api/users', view_func=admin_users_api, methods=['GET', 'POST'])
