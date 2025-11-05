@@ -16,6 +16,8 @@ import base64
 import httpx
 
 from Utils.catalog import validate_and_price_items
+import logging
+sales_logger = logging.getLogger('sales')
 
 @token_required  # allow guest checkout
 def create_sale(user):
@@ -179,6 +181,10 @@ def stripe_success():
             if receipt_url:
                 sale.stripe_receipt_url = receipt_url
             sale.save()
+            try:
+                sales_logger.info(f"paid sale_id={sale.id} method=stripe amount={sale.total_price:.2f} items={sale.item_count} user_id={getattr(getattr(sale,'user',None),'id',None)} charge={sale.stripe_charge_id}")
+            except Exception:
+                pass
         # Redirect to receipt page
         if sale:
             return redirect(f"/receipt/{sale.id}")
@@ -345,6 +351,10 @@ def paypal_return():
                     paypal_capture_id=cap_id
                 )
                 sale.save()
+                try:
+                    sales_logger.info(f"paid sale_id={sale.id} method=paypal amount={sale.total_price:.2f} items={sale.item_count} user_id={getattr(getattr(sale,'user',None),'id',None)} capture={sale.paypal_capture_id}")
+                except Exception:
+                    pass
                 return redirect(f"/receipt/{sale.id}")
             return redirect('/shop?paid=paypal_error')
     except Exception:
@@ -436,6 +446,10 @@ def stripe_webhook():
         if receipt_url:
             sale.stripe_receipt_url = receipt_url
         sale.save()
+        try:
+            sales_logger.info(f"paid sale_id={sale.id} method=stripe amount={sale.total_price:.2f} items={sale.item_count} user_id={getattr(getattr(sale,'user',None),'id',None)} charge={sale.stripe_charge_id}")
+        except Exception:
+            pass
     elif event['type'] == 'payment_intent.succeeded':
         pi = event['data']['object']
         charge_id = pi.get('latest_charge')

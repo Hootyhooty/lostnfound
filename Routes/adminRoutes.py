@@ -5,7 +5,8 @@ from Controllers.adminController import (
     admin_users_api, admin_user_delete, admin_user_toggle_active,
     admin_items_api, admin_item_delete, admin_item_toggle_active,
     admin_testimonials_api, admin_testimonial_delete, admin_testimonial_toggle_public,
-    admin_send_email
+    admin_send_email,
+    sales_log_page, get_sales_logs_text
 )
 from Controllers.salesController import create_sale, create_stripe_checkout, paypal_create_order, paypal_return, stripe_success, stripe_webhook, receipt_view
 
@@ -14,10 +15,12 @@ admin_routes = Blueprint("admin_routes", __name__)
 # Admin dashboards
 admin_routes.add_url_rule("/admin", view_func=admin_dashboard_page, methods=["GET"])
 admin_routes.add_url_rule("/admin/logs", view_func=admin_logs, methods=["GET"])
+admin_routes.add_url_rule("/admin/sales-log", view_func=sales_log_page, methods=["GET"])
 
 # Optional: JSON endpoint for async data loading
 admin_routes.add_url_rule("/admin/logs/data", view_func=get_logs_json, methods=["GET"])
 admin_routes.add_url_rule("/admin/logs/text", view_func=get_logs_text, methods=["GET"])
+admin_routes.add_url_rule("/admin/logs/sales-text", view_func=get_sales_logs_text, methods=["GET"])
 
 admin_routes.add_url_rule('/sales', view_func=create_sale, methods=['POST'])
 admin_routes.add_url_rule('/api/v1/sales', view_func=create_sale, methods=['POST'])

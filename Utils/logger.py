@@ -75,6 +75,22 @@ def setup_logging(app):
     access_logger = logging.getLogger("access")
     access_logger.setLevel(logging.INFO)
     access_logger.addHandler(access_handler)
+    # Dedicated sales logger
+    sales_handler = TimedRotatingFileHandler(
+        "logs/sales.log", when="midnight", interval=1, backupCount=30,
+        encoding="utf-8", delay=True
+    )
+    sales_handler.suffix = "%Y-%m-%d"
+    sales_handler.setFormatter(formatter)
+    sales_handler.setLevel(logging.INFO)
+    sales_logger = logging.getLogger("sales")
+    sales_logger.setLevel(logging.INFO)
+    sales_logger.addHandler(sales_handler)
+    # Mirror to console for platform logs
+    sales_console = logging.StreamHandler()
+    sales_console.setFormatter(formatter)
+    sales_console.setLevel(logging.INFO)
+    sales_logger.addHandler(sales_console)
     # Mirror access logs to console so Render captures them
     access_console = logging.StreamHandler()
     access_console.setFormatter(logging.Formatter("%(asctime)s - %(message)s"))

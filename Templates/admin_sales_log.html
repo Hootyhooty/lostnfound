@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Sales Log{% endblock %}
+{% block content %}
+<section class="layout_padding">
+  <div class="container">
+    <h3>Sales Log (paid)</h3>
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <label class="me-2">Days:</label>
+      <select id="salesDays" class="form-select form-select-sm" style="width:auto">
+        <option value="1">1d</option>
+        <option value="3">3d</option>
+        <option value="7" selected>7d</option>
+        <option value="14">14d</option>
+        <option value="30">30d</option>
+      </select>
+      <button id="salesRefresh" class="btn btn-sm btn-outline-primary ms-2">Refresh</button>
+      <div class="form-check ms-3">
+        <input class="form-check-input" type="checkbox" id="salesWrap">
+        <label class="form-check-label" for="salesWrap">Wrap</label>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body" style="padding:0;">
+        <pre id="salesPre" style="margin:0;padding:16px;background:#0f172a;color:#e2e8f0;height:70vh;overflow:auto;white-space:pre;font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">Loading...</pre>
+      </div>
+    </div>
+  </div>
+  <script>
+    async function loadSales() {
+      const days = document.getElementById('salesDays').value;
+      const wrap = document.getElementById('salesWrap').checked;
+      const qs = new URLSearchParams({ days, order: 'desc', limit: '2000' });
+      const res = await fetch(`/admin/logs/sales-text?${qs.toString()}`);
+      const data = await res.json();
+      const pre = document.getElementById('salesPre');
+      pre.style.whiteSpace = wrap ? 'pre-wrap' : 'pre';
+      pre.textContent = (data && data.lines && data.lines.length) ? data.lines.join('\n') : 'No sales yet.';
+    }
+    document.getElementById('salesRefresh').addEventListener('click', loadSales);
+    document.getElementById('salesWrap').addEventListener('change', loadSales);
+    loadSales();
+  </script>
+</section>
+{% endblock %}
+
+

@@ -245,6 +245,61 @@ def get_logs_text(user=None):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+# =============================
+# Sales log endpoints
+# =============================
+@roles_required("admin")
+def sales_log_page(user):
+    return render_template("admin_sales_log.html")
+
+
+@roles_required("admin")
+def get_sales_logs_text(user=None):
+    """Return raw sales.log lines (paid purchases). Supports optional params: days, limit, order."""
+    try:
+        from flask import request
+        days_param = request.args.get("days", default="7")
+        limit_param = request.args.get("limit", default="1000")
+        order = (request.args.get("order", "desc") or "desc").lower()
+
+        try:
+            limit = max(1, min(10000, int(limit_param)))
+        except (TypeError, ValueError):
+            limit = 1000
+
+        end_dt = datetime.now()
+        try:
+            days = max(1, int(days_param))
+        except (TypeError, ValueError):
+            days = 7
+        start_dt = end_dt - timedelta(days=days)
+
+        log_path = os.path.join("logs", "sales.log")
+        lines = []
+        try:
+            with open(log_path, "rt", encoding="utf-8", errors="ignore") as f:
+                all_lines = f.readlines()
+        except FileNotFoundError:
+            all_lines = []
+
+        # Filter by date at beginning of line (YYYY-MM-DD ...)
+        out = []
+        for line in (reversed(all_lines) if order == "desc" else all_lines):
+            try:
+                date_str = line[:10]
+                line_dt = datetime.strptime(date_str, "%Y-%m-%d")
+            except Exception:
+                line_dt = None
+            if line_dt and not (start_dt <= line_dt <= end_dt):
+                continue
+            out.append(line.rstrip("\n"))
+            if len(out) >= limit:
+                break
+        return jsonify({"lines": out, "count": len(out)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # =============================
 # Admin Dashboard and API
 # =============================
