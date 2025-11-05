@@ -21,12 +21,8 @@ function hideModal(id) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Reset basket on shop page refresh
-  try {
-    if (window.location && window.location.pathname === '/shop') {
-      localStorage.removeItem('basket');
-    }
-  } catch (e) {}
+  // Always reset basket on page load
+  try { localStorage.removeItem('basket'); } catch (e) {}
   // -------------------------
   // Element references
   // -------------------------

@@ -53,10 +53,8 @@ def create_stripe_checkout():
     except ValueError as ve:
         return jsonify({'error': str(ve)}), 400
     total_price = total_cents / 100.0
-    # Persist sale using validated snapshot
+    # Do not persist a Sale until payment succeeds
     items_json = [json.dumps(it) for it in validated_items]
-    sale = Sale(items=items_json, total_price=total_price, created_at=datetime.utcnow(), status='created', payment_method='stripe', item_count=sum(i['qty'] for i in validated_items))
-    sale.save()
 
     if not stripe:
         return jsonify({'error': 'Stripe SDK not available'}), 500
@@ -72,19 +70,18 @@ def create_stripe_checkout():
             'quantity': it['qty']
         })
 
+    # Encode compact items map for metadata (e.g., mug:2,shirt:1)
+    compact = ",".join([f"{i['product_code']}:{i['qty']}" for i in validated_items])[:480]
     session = stripe.checkout.Session.create(
         mode='payment',
         line_items=line_items,
         success_url=f"{request.host_url.rstrip('/')}/stripe/success?session_id={{CHECKOUT_SESSION_ID}}",
         cancel_url=f"{request.host_url.rstrip('/')}/shop?paid=stripe_cancel",
-        metadata={'sale_id': str(sale.id)},
+        metadata={'items_compact': compact},
         payment_intent_data={
-            'metadata': {'sale_id': str(sale.id)}
+            'metadata': {'items_compact': compact}
         }
     )
-    # save session id for later reconciliation
-    sale.stripe_id = session.id
-    sale.save()
     return jsonify({'url': session.url})
 
 
@@ -97,8 +94,7 @@ def stripe_success():
     try:
         session = stripe.checkout.Session.retrieve(session_id, expand=['payment_intent.latest_charge'])
         sale = Sale.objects(stripe_id=session_id).first()
-        if session.get('payment_status') == 'paid' and sale:
-            sale.status = 'paid'
+        if session.get('payment_status') == 'paid':
             # Attempt to capture charge id and receipt url from expanded intent
             charge_id = None
             receipt_url = None
@@ -113,6 +109,45 @@ def stripe_success():
                     receipt_url = ch.get('receipt_url')
             except Exception:
                 pass
+            if not sale:
+                # Create paid Sale now using metadata items
+                try:
+                    items_compact = (session.get('metadata') or {}).get('items_compact', '')
+                except Exception:
+                    items_compact = ''
+                validated_items = []
+                total_cents = 0
+                if items_compact:
+                    try:
+                        from Utils.catalog import CATALOG
+                        for pair in items_compact.split(','):
+                            if not pair: continue
+                            code, qty_s = pair.split(':', 1)
+                            qty = int(qty_s)
+                            if code in CATALOG and qty > 0:
+                                entry = CATALOG[code]
+                                line = {
+                                    'product_code': code,
+                                    'name': entry['name'],
+                                    'unit_price_cents': entry['price_cents'],
+                                    'qty': qty,
+                                    'line_total_cents': entry['price_cents'] * qty
+                                }
+                                validated_items.append(line)
+                                total_cents += line['line_total_cents']
+                    except Exception:
+                        validated_items = []
+                        total_cents = 0
+                sale = Sale(
+                    items=[json.dumps(it) for it in validated_items],
+                    total_price=(total_cents/100.0) if total_cents else 0.0,
+                    created_at=datetime.utcnow(),
+                    status='paid',
+                    payment_method='stripe',
+                    item_count=sum(i.get('qty',0) for i in validated_items),
+                    stripe_id=session_id
+                )
+            sale.status = 'paid'
             if charge_id:
                 sale.stripe_charge_id = charge_id
             if receipt_url:
@@ -163,10 +198,13 @@ def paypal_create_order():
         return jsonify({'error': 'PayPal not configured'}), 500
     return_url = f"{request.host_url.rstrip('/')}/paypal/return"
     cancel_url = f"{request.host_url.rstrip('/')}/shop?paid=paypal_cancel"
+    # encode compact items in custom_id to reconstruct on return
+    compact = ",".join([f"{i['product_code']}:{i['qty']}" for i in validated_items])[:120]
     body = {
         'intent': 'CAPTURE',
         'purchase_units': [{
-            'amount': {'currency_code': 'USD', 'value': f"{total_price:.2f}"}
+            'amount': {'currency_code': 'USD', 'value': f"{total_price:.2f}"},
+            'custom_id': compact
         }],
         'application_context': {
             'brand_name': 'Lost&Found',
@@ -188,8 +226,6 @@ def paypal_create_order():
                 if link.get('rel') == 'approve':
                     approve_url = link.get('href')
                     break
-            sale = Sale(items=items_json, total_price=total_price, created_at=datetime.utcnow(), status='pending', payment_method='paypal', paypal_id=order_id, item_count=sum(i['qty'] for i in validated_items))
-            sale.save()
             return jsonify({'id': order_id, 'approve_url': approve_url})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -211,18 +247,52 @@ def paypal_return():
             r.raise_for_status()
             data = r.json()
             status = data.get('status', '')
-            sale = Sale.objects(paypal_id=order_id).first()
-            if status == 'COMPLETED' and sale:
+            if status == 'COMPLETED':
+                # Build items from custom_id
+                validated_items = []
+                total_cents = 0
+                compact = None
+                try:
+                    compact = data['purchase_units'][0].get('custom_id')
+                except Exception:
+                    compact = None
+                if compact:
+                    try:
+                        from Utils.catalog import CATALOG
+                        for pair in compact.split(','):
+                            if not pair: continue
+                            code, qty_s = pair.split(':', 1)
+                            qty = int(qty_s)
+                            if code in CATALOG and qty > 0:
+                                entry = CATALOG[code]
+                                line = {
+                                    'product_code': code,
+                                    'name': entry['name'],
+                                    'unit_price_cents': entry['price_cents'],
+                                    'qty': qty,
+                                    'line_total_cents': entry['price_cents'] * qty
+                                }
+                                validated_items.append(line)
+                                total_cents += line['line_total_cents']
+                    except Exception:
+                        pass
                 cap_id = None
                 try:
                     cap_id = data['purchase_units'][0]['payments']['captures'][0]['id']
                 except Exception:
                     cap_id = None
-                sale.status = 'paid'
-                if cap_id:
-                    sale.paypal_capture_id = cap_id
+                sale = Sale(
+                    items=[json.dumps(it) for it in validated_items],
+                    total_price=(total_cents/100.0) if total_cents else float(data['purchase_units'][0]['payments']['captures'][0]['amount']['value']),
+                    created_at=datetime.utcnow(),
+                    status='paid',
+                    payment_method='paypal',
+                    item_count=sum(i.get('qty',0) for i in validated_items) or None,
+                    paypal_id=order_id,
+                    paypal_capture_id=cap_id
+                )
                 sale.save()
-                return redirect('/shop?paid=paypal_success')
+                return redirect(f"/receipt/{sale.id}")
             return redirect('/shop?paid=paypal_error')
     except Exception:
         return redirect('/shop?paid=paypal_error')
@@ -260,13 +330,50 @@ def stripe_webhook():
                     receipt_url = pi['latest_charge'].get('receipt_url')
         except Exception:
             charge_id = None
-        if sale:
-            sale.status = 'paid'
-            if charge_id:
-                sale.stripe_charge_id = charge_id
-            if receipt_url:
-                sale.stripe_receipt_url = receipt_url
-            sale.save()
+        if not sale:
+            # Create Sale now (paid) using compact metadata
+            validated_items = []
+            total_cents = 0
+            try:
+                items_compact = (session.get('metadata') or {}).get('items_compact', '')
+            except Exception:
+                items_compact = ''
+            if items_compact:
+                try:
+                    from Utils.catalog import CATALOG
+                    for pair in items_compact.split(','):
+                        if not pair: continue
+                        code, qty_s = pair.split(':', 1)
+                        qty = int(qty_s)
+                        if code in CATALOG and qty > 0:
+                            entry = CATALOG[code]
+                            line = {
+                                'product_code': code,
+                                'name': entry['name'],
+                                'unit_price_cents': entry['price_cents'],
+                                'qty': qty,
+                                'line_total_cents': entry['price_cents'] * qty
+                            }
+                            validated_items.append(line)
+                            total_cents += line['line_total_cents']
+                except Exception:
+                    validated_items = []
+                    total_cents = 0
+            sale = Sale(
+                items=[json.dumps(it) for it in validated_items],
+                total_price=(total_cents/100.0) if total_cents else 0.0,
+                created_at=datetime.utcnow(),
+                status='paid',
+                payment_method='stripe',
+                item_count=sum(i.get('qty',0) for i in validated_items),
+                stripe_id=session_id
+            )
+        sale.status = 'paid'
+        if charge_id:
+            sale.stripe_charge_id = charge_id
+        if receipt_url:
+            sale.stripe_receipt_url = receipt_url
+        sale.save()
     elif event['type'] == 'payment_intent.succeeded':
         pi = event['data']['object']
         charge_id = pi.get('latest_charge')
