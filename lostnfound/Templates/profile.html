@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-12">
+      <!-- User ID and Status Section -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-2">
+              <div class="d-flex align-items-center">
+                <img id="profileUserPhoto" src="{{ user.photo and ('/uploads/' ~ user.photo) or url_for('static', filename='images/default.jpg') }}" alt="User" class="rounded-circle me-3" style="width:48px; height:48px; object-fit:cover;">
+                <div class="mb-0-padding">
+                  <h5 class="mb-0">User ID: {{ user.id }}</h5>
+                  <p class="mb-0 text-danger">Reputation Status: 
+                    <span class="badge {% if user.email_verified and user.phone_verified %}bg-success{% else %}bg-danger{% endif %}">
+                      {% if user.email_verified and user.phone_verified %}Green{% else %}Red{% endif %}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Information Section -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h6 class="text-muted">username and user address and zipcode</h6>
+              <h4 class="mb-2">{{ user.first_name or '' }} {{ user.last_name or '' }}</h4>
+              <p class="mb-1">{{ user.address_line1 or '' }}</p>
+              <p class="mb-1">{{ user.city or '' }}, {{ user.state or '' }}, {{ user.zipcode or '' }}</p>
+            </div>
+            <div class="col-md-6">
+              <h6 class="text-muted">here is email and phone of the user</h6>
+              <p class="mb-1"><strong>Email:</strong> {{ user.email }}</p>
+              <p class="mb-1"><strong>Phone:</strong> {{ user.phone if user.display_phone else 'Hidden' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account Management Buttons -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="d-flex gap-2 mb-3">
+            <a href="/profile/edit" class="btn btn-success">
+              <i class="fa fa-edit me-2"></i>Edit Account Profile
+            </a>
+            <button class="btn btn-success" id="resetPasswordBtn">
+              <i class="fa fa-key me-2"></i>Reset Password
+            </button>
+          </div>
+          <div>
+            <a href="#" class="text-primary" id="accountInfoLink">What can my LostAndFound.com Account do?</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="card">
+        <div class="card-header">
+          <ul class="nav nav-tabs card-header-tabs" id="profileTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="listings-tab" data-bs-toggle="tab" data-bs-target="#listings" type="button" role="tab" aria-controls="listings" aria-selected="true">Listings</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="venues-tab" data-bs-toggle="tab" data-bs-target="#venues" type="button" role="tab" aria-controls="venues" aria-selected="false">Venues</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="messages-tab" data-bs-toggle="tab" data-bs-target="#messages" type="button" role="tab" aria-controls="messages" aria-selected="false">
+                Messages
+                {% set unread = inbox|selectattr('read', 'equalto', False)|list|length if inbox is defined else 0 %}
+                {% if unread > 0 %}
+                  <span class="badge bg-danger ms-1">{{ unread }}</span>
+                {% endif %}
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="devices-tab" data-bs-toggle="tab" data-bs-target="#devices" type="button" role="tab" aria-controls="devices" aria-selected="false">Devices</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="id-returns-tab" data-bs-toggle="tab" data-bs-target="#id-returns" type="button" role="tab" aria-controls="id-returns" aria-selected="false">ID Returns</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="registry-returns-tab" data-bs-toggle="tab" data-bs-target="#registry-returns" type="button" role="tab" aria-controls="registry-returns" aria-selected="false">Registry Returns</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="social-media-tab" data-bs-toggle="tab" data-bs-target="#social-media" type="button" role="tab" aria-controls="social-media" aria-selected="false">Social Media</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="developers-tab" data-bs-toggle="tab" data-bs-target="#developers" type="button" role="tab" aria-controls="developers" aria-selected="false">Developers</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="publisher-tab" data-bs-toggle="tab" data-bs-target="#publisher" type="button" role="tab" aria-controls="publisher" aria-selected="false">Publisher</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="affiliate-tab" data-bs-toggle="tab" data-bs-target="#affiliate" type="button" role="tab" aria-controls="affiliate" aria-selected="false">Affiliate</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="reseller-tab" data-bs-toggle="tab" data-bs-target="#reseller" type="button" role="tab" aria-controls="reseller" aria-selected="false">Reseller</button>
+            </li>
+          </ul>
+        </div>
+        <div class="card-body">
+          <div class="tab-content" id="profileTabsContent">
+            <!-- Listings Tab -->
+            <div class="tab-pane fade show active" id="listings" role="tabpanel" aria-labelledby="listings-tab">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">My Lost And Found Listings</h5>
+                <div class="d-flex align-items-center">
+                  <div class="dropdown me-3">
+                    <button class="btn btn-success dropdown-toggle" type="button" id="viewAllDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                      <i class="fa fa-camera me-2"></i>View All Listings
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="viewAllDropdown">
+                      <li><a class="dropdown-item" href="#">All Listings</a></li>
+                      <li><a class="dropdown-item" href="#">Lost Items</a></li>
+                      <li><a class="dropdown-item" href="#">Found Items</a></li>
+                    </ul>
+                  </div>
+                  <div class="input-group" style="width: 200px;">
+                    <input type="text" class="form-control" placeholder="Type to Search">
+                  </div>
+                </div>
+              </div>
+              
+              <div class="table-responsive">
+                <table class="table table-striped">
+                  <thead class="table-dark">
+                    <tr>
+                      <th><i class="fa fa-camera"></i></th>
+                      <th>Date</th>
+                      <th>Listing ID</th>
+                      <th>Type</th>
+                      <th>Title</th>
+                      <th>Status / Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% if lost_items %}
+                      {% for item in lost_items %}
+                      <tr>
+                        <td>
+                          {% if item.images %}
+                            <img src="/uploads/{{ item.images[0] }}" alt="Item image" class="img-thumbnail" style="width: 40px; height: 40px; object-fit: cover;">
+                          {% else %}
+                            <i class="fa fa-image text-muted"></i>
+                          {% endif %}
+                        </td>
+                        <td>{{ item.date_lost.strftime('%m/%d/%Y') if item.date_lost else 'N/A' }}</td>
+                        <td>{{ item.id_str[:8] }}...</td>
+                        <td>
+                          <span class="badge {% if item.status == 'lost' %}bg-danger{% else %}bg-success{% endif %}">
+                            {{ item.status.title() }}
+                          </span>
+                        </td>
+                        <td>
+                          <strong>{{ item.category }}</strong>
+                          {% if item.sub_category %}
+                            <br><small class="text-muted">{{ item.sub_category }}</small>
+                          {% endif %}
+                          {% if item.brand_breed %}
+                            <br><small class="text-muted">{{ item.brand_breed }}</small>
+                          {% endif %}
+                          {% if item.primary_color %}
+                            <br><small class="text-muted">Color: {{ item.primary_color }}{% if item.secondary_color %} / {{ item.secondary_color }}{% endif %}</small>
+                          {% endif %}
+                        </td>
+                        <td>
+                          <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-boundary="window" aria-expanded="false">
+                              Update
+                            </button>
+                            <ul class="dropdown-menu">
+                              <li><a class="dropdown-item" href="/item/{{ item.slug }}">
+                                <i class="fa fa-eye"></i> View
+                              </a></li>
+                              <li><a class="dropdown-item" href="/item/{{ item.slug }}/edit">
+                                <i class="fa fa-edit"></i> Edit
+                              </a></li>
+                              <li><a class="dropdown-item" href="#" onclick="viewMessagesForItem('{{ item.id_str }}')">
+                                <i class="fa fa-envelope"></i> View Messages
+                              </a></li>
+                              <li><a class="dropdown-item" href="#" onclick="markItemClaimed('{{ item.id_str }}')">
+                                <i class="fa fa-check"></i> Mark as Claimed
+                              </a></li>
+                              <li><hr class="dropdown-divider"></li>
+                              <li><a class="dropdown-item text-danger" href="#" onclick="deleteItem('{{ item.id_str }}')">
+                                <i class="fa fa-trash"></i> Delete
+                              </a></li>
+                            </ul>
+                          </div>
+                        </td> 
+                      </tr>
+                      {% endfor %}
+                    {% else %}
+                      <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                          <i class="fa fa-search fa-2x mb-2"></i><br>
+                          No Listings Found<br>
+                          <small>Start by <a href="/report-lost-found">reporting a lost item</a></small>
+                        </td>
+                      </tr>
+                    {% endif %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <!-- Other tabs content (placeholder) -->
+            <div class="tab-pane fade" id="venues" role="tabpanel" aria-labelledby="venues-tab">
+              <p class="text-muted">Venues content coming soon...</p>
+            </div>
+            <div class="tab-pane fade" id="messages" role="tabpanel" aria-labelledby="messages-tab">
+              <h5 class="mb-3">Inbox</h5>
+              <div class="table-responsive">
+                <table class="table table-striped">
+                  <thead class="table-dark">
+                    <tr>
+                      <th>Name</th>
+                      <th>Title</th>
+                      <th>Description</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% if inbox and inbox|length > 0 %}
+                      {% for m in inbox %}
+                        <tr data-item-id="{{ m.item.id if m.item }}" data-message-id="{{ m.id }}" class="message-row {% if not m.read %}table-warning{% endif %}">
+                          <td>{{ (m.sender.first_name or '') ~ ' ' ~ (m.sender.last_name or '') if m.sender else 'Unknown' }}</td>
+                          <td><a href="#" class="open-message" data-id="{{ m.id }}">{{ m.title }}</a></td>
+                          <td>{{ m.body }}</td>
+                          <td>{{ m.created_at.strftime('%Y-%m-%d %H:%M') if m.created_at else '' }}</td>
+                        </tr>
+                      {% endfor %}
+                    {% else %}
+                      <tr>
+                        <td colspan="4" class="text-muted text-center">No messages</td>
+                      </tr>
+                    {% endif %}
+                  </tbody>
+                </table>
+              </div>
+              <div class="modal fade" id="viewMessageModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="viewMessageTitle">Message</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <p id="viewMessageBody"></p>
+                      <hr>
+                      <div class="mb-2"><strong>Reply</strong></div>
+                      <div class="mb-2">
+                        <input class="form-control" id="replyTitle" placeholder="Title" />
+                      </div>
+                      <div class="mb-2">
+                        <textarea class="form-control" id="replyBody" rows="4" placeholder="Message"></textarea>
+                      </div>
+                      <div class="text-end">
+                        <button class="btn btn-success" id="sendReplyBtn">Send Reply</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="devices" role="tabpanel" aria-labelledby="devices-tab">
+              <p class="text-muted">Devices content coming soon...</p>
+            </div>
+            <div class="tab-pane fade" id="id-returns" role="tabpanel" aria-labelledby="id-returns-tab">
+              <p class="text-muted">ID Returns content coming soon...</p>
+            </div>
+            <div class="tab-pane fade" id="registry-returns" role="tabpanel" aria-labelledby="registry-returns-tab">
+              <p class="text-muted">Registry Returns content coming soon...</p>
+            </div>
+            <div class="tab-pane fade" id="social-media" role="tabpanel" aria-labelledby="social-media-tab">
+              <p class="text-muted">Social Media content coming soon...</p>
+            </div>
+            <div class="tab-pane fade" id="developers" role="tabpanel" aria-labelledby="developers-tab">
+              <p class="text-muted">Developers content coming soon...</p>
+            </div>
+            <div class="tab-pane fade" id="publisher" role="tabpanel" aria-labelledby="publisher-tab">
+              <p class="text-muted">Publisher content coming soon...</p>
+            </div>
+            <div class="tab-pane fade" id="affiliate" role="tabpanel" aria-labelledby="affiliate-tab">
+              <p class="text-muted">Affiliate content coming soon...</p>
+            </div>
+            <div class="tab-pane fade" id="reseller" role="tabpanel" aria-labelledby="reseller-tab">
+              <p class="text-muted">Reseller content coming soon...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // Handle reset password button
+  document.getElementById("resetPasswordBtn").addEventListener("click", () => {
+    // Open the login modal and switch to forgot password
+    const loginModal = new bootstrap.Modal(document.getElementById("loginModal"));
+    loginModal.show();
+    setTimeout(() => {
+      window.showForgot();
+    }, 500);
+  });
+  
+  // Handle account info link
+  document.getElementById("accountInfoLink").addEventListener("click", (e) => {
+    e.preventDefault();
+    alert("Your LostAndFound.com account allows you to:\n\n• Report lost and found items\n• Manage your listings\n• Contact other users\n• Track your reputation status\n• Access premium features");
+  });
+});
+
+// Item management functions
+function viewItem(itemId) {
+  // TODO: Implement view item modal or page
+  alert("View item functionality coming soon for ID: " + itemId);
+}
+
+function editItem(itemId) {
+  // TODO: Implement edit item functionality
+  alert("Edit item functionality coming soon for ID: " + itemId);
+}
+
+async function deleteItem(itemId) {
+  if (!confirm("Are you sure you want to delete this item? This action cannot be undone.")) {
+    return;
+  }
+  
+  const token = localStorage.getItem("access_token");
+  if (!token) {
+    alert("You must be logged in to delete items.");
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/api/v1/lost-items/${itemId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      alert("Item deleted successfully!");
+      location.reload(); // Refresh the page to show updated list
+    } else {
+      alert("Error deleting item: " + (result.message || "Unknown error"));
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    alert("Error deleting item. Please try again.");
+  }
+}
+
+// View Messages for a specific item: switch to Messages tab and filter rows
+function viewMessagesForItem(itemId) {
+  const tabBtn = document.getElementById('messages-tab');
+  tabBtn.click();
+  setTimeout(()=>{
+    const rows = document.querySelectorAll('#messages .message-row');
+    rows.forEach(r => {
+      const item = r.getAttribute('data-item-id');
+      if (item && item.startsWith(itemId.substring(0,8))) {
+        r.style.display = '';
+      } else if (item) {
+        r.style.display = 'none';
+      }
+    });
+  }, 150);
+}
+
+// Mark item as claimed
+async function markItemClaimed(itemId) {
+  if (!confirm('Mark this item as claimed? This will move it to claimed items.')) return;
+  const token = localStorage.getItem('access_token');
+  try {
+    const resp = await fetch(`/api/v1/lost-items/${itemId}/claim`, { method:'POST', headers: { 'Authorization': `Bearer ${token}` }});
+    const json = await resp.json();
+    if (json && json.success) {
+      alert('Item marked as claimed.');
+      location.reload();
+    } else {
+      alert(json.message || 'Failed to mark as claimed');
+    }
+  } catch(err) {
+    console.error(err);
+    alert('Failed to mark as claimed');
+  }
+}
+
+// Open message modal and mark read
+document.addEventListener('click', async (e)=>{
+  const link = e.target.closest('.open-message');
+  if (!link) return;
+  e.preventDefault();
+  const id = link.getAttribute('data-id');
+  const row = link.closest('tr');
+  document.getElementById('viewMessageTitle').textContent = link.textContent;
+  document.getElementById('viewMessageBody').textContent = row.querySelector('td:nth-child(3)').textContent;
+  const modal = new bootstrap.Modal(document.getElementById('viewMessageModal'));
+  modal.show();
+  try {
+    const token = localStorage.getItem('access_token');
+    await fetch(`/api/v1/messages/${row.getAttribute('data-message-id')}/read`, { method:'PATCH', headers: { 'Authorization': `Bearer ${token}` } });
+    row.classList.remove('table-warning');
+  } catch {}
+});
+
+// Send reply with cooldown
+(function(){
+  let sendingReply = false;
+  document.addEventListener('click', async (e)=>{
+    const btn = e.target.closest('#sendReplyBtn');
+    if (!btn) return;
+    if (sendingReply) return;
+    sendingReply = true; btn.disabled = true;
+    const modalEl = document.getElementById('viewMessageModal');
+    const row = document.querySelector('#messages .message-row.table-active') || document.querySelector('#messages .message-row');
+    const activeId = document.querySelector('#messages .open-message[data-open="1"]')?.getAttribute('data-id') || (row && row.getAttribute('data-message-id'));
+    const title = document.getElementById('replyTitle').value.trim();
+    const body = document.getElementById('replyBody').value.trim();
+    if (!activeId || !title || !body) { alert('Please provide title and message'); sendingReply = false; btn.disabled=false; return; }
+    try {
+      const token = localStorage.getItem('access_token');
+      const resp = await fetch('/api/v1/messages/reply', { method:'POST', headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ message_id: activeId, title, body }) });
+      const json = await resp.json();
+      if (json && json.success) {
+        alert('Reply sent');
+        setTimeout(()=>{ sendingReply=false; btn.disabled=false; }, 4000);
+        const modal = bootstrap.Modal.getInstance(modalEl); if (modal) modal.hide();
+      } else { alert(json.message || 'Failed to send reply'); sendingReply=false; btn.disabled=false; }
+    } catch(err) { console.error(err); alert('Failed to send reply'); sendingReply=false; btn.disabled=false; }
+  });
+})();
+</script>
+{% endblock %}

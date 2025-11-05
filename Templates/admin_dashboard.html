@@ -13,6 +13,9 @@
           <button class="list-group-item list-group-item-action" data-section="testimonials">Testimonials</button>
           <button class="list-group-item list-group-item-action" data-section="email">Send Email</button>
           <a href="/admin/logs" class="list-group-item list-group-item-action">Logs</a>
+          <a href="/admin/logs?level=INFO" class="list-group-item list-group-item-action" data-log-level="INFO">Info Log</a>
+          <a href="/admin/logs?level=WARNING" class="list-group-item list-group-item-action" data-log-level="WARNING">Warning Log</a>
+          <a href="/admin/logs?level=ERROR" class="list-group-item list-group-item-action" data-log-level="ERROR">Error Log</a>
         </div>
       </div>
 
@@ -104,8 +107,11 @@ async function loadUsers() {
       u.email || '-',
       u.phone || '-',
       u.role || 'user',
-      u.active ? 'Yes' : 'No',
-      `<button class="btn btn-sm btn-outline-danger" data-del-user="${u.id}">Delete</button>`
+      `<span data-user-active="${u.id}">${u.active ? 'Yes' : 'No'}</span>`,
+      `<div class="btn-group btn-group-sm" role="group">
+         <button class="btn btn-outline-secondary" data-toggle-user="${u.id}">${u.active ? 'Deactivate' : 'Activate'}</button>
+         <button class="btn btn-outline-danger" data-del-user="${u.id}">Delete</button>
+       </div>`
     ]);
     document.getElementById('sectionBody').innerHTML = renderTable(headers, rows);
 
@@ -115,6 +121,22 @@ async function loadUsers() {
         const id = btn.getAttribute('data-del-user');
         await fetch(`/admin/api/users/${id}`, { method: 'DELETE' });
         loadUsers();
+      });
+    });
+
+    document.querySelectorAll('[data-toggle-user]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-toggle-user');
+        try {
+          const res = await fetch(`/admin/api/users/${id}/toggle`, { method: 'POST' });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.message || 'Toggle failed');
+          const cell = document.querySelector(`[data-user-active="${id}"]`);
+          if (cell) cell.textContent = data.active ? 'Yes' : 'No';
+          btn.textContent = data.active ? 'Deactivate' : 'Activate';
+        } catch (e) {
+          alert('Failed to toggle user: ' + e.message);
+        }
       });
     });
 
@@ -145,11 +167,19 @@ async function loadItems() {
   document.getElementById('sectionBody').innerHTML = '<div class="alert alert-info">Loading items...</div>';
   try {
     const data = await fetchJSON('/admin/api/items?limit=100');
-    const headers = ['Title','Status','Category','City','Active','Actions'];
-    const rows = (data.items || []).map(i => [
-      i.title || '-', i.status || '-', i.category || '-', i.city || '-', i.is_active ? 'Yes' : 'No',
-      `<button class="btn btn-sm btn-outline-danger" data-del-item="${i.id}">Delete</button>`
-    ]);
+    const headers = ['Title','Status','Category','Address','Active','Actions'];
+    const rows = (data.items || []).map(i => {
+      const parts = [i.address, i.city, i.state_province, i.zipcode, i.country].filter(p => p && String(p).trim() !== '');
+      const address = parts.join(', ');
+      return [
+        i.title || '-', i.status || '-', i.category || '-', address || '-',
+        `<span data-item-active="${i.id}">${i.is_active ? 'Yes' : 'No'}</span>`,
+      `<div class="btn-group btn-group-sm" role="group">
+         <button class="btn btn-outline-secondary" data-toggle-item="${i.id}">${i.is_active ? 'Deactivate' : 'Activate'}</button>
+         <button class="btn btn-outline-danger" data-del-item="${i.id}">Delete</button>
+       </div>`
+      ];
+    });
     document.getElementById('sectionBody').innerHTML = renderTable(headers, rows);
     document.querySelectorAll('[data-del-item]').forEach(btn => {
       btn.addEventListener('click', async () => {
@@ -157,6 +187,22 @@ async function loadItems() {
         const id = btn.getAttribute('data-del-item');
         await fetch(`/admin/api/items/${id}`, { method: 'DELETE' });
         loadItems();
+      });
+    });
+
+    document.querySelectorAll('[data-toggle-item]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-toggle-item');
+        try {
+          const res = await fetch(`/admin/api/items/${id}/toggle`, { method: 'POST' });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.message || 'Toggle failed');
+          const cell = document.querySelector(`[data-item-active="${id}"]`);
+          if (cell) cell.textContent = data.is_active ? 'Yes' : 'No';
+          btn.textContent = data.is_active ? 'Deactivate' : 'Activate';
+        } catch (e) {
+          alert('Failed to toggle item: ' + e.message);
+        }
       });
     });
   } catch (e) {
@@ -172,8 +218,11 @@ async function loadTestimonials() {
     const data = await fetchJSON('/admin/api/testimonials?limit=100');
     const headers = ['User','Message','Public','Actions'];
     const rows = (data.items || []).map(t => [
-      t.user_name || '-', t.message || '-', t.is_public ? 'Yes' : 'No',
-      `<button class="btn btn-sm btn-outline-danger" data-del-t="${t.id}">Delete</button>`
+      t.user_name || '-', t.message || '-', `<span data-t-public="${t.id}">${t.is_public ? 'Yes' : 'No'}</span>`,
+      `<div class="btn-group btn-group-sm" role="group">
+         <button class="btn btn-outline-secondary" data-toggle-t="${t.id}">${t.is_public ? 'Unpublish' : 'Publish'}</button>
+         <button class="btn btn-outline-danger" data-del-t="${t.id}">Delete</button>
+       </div>`
     ]);
     document.getElementById('sectionBody').innerHTML = renderTable(headers, rows);
     document.querySelectorAll('[data-del-t]').forEach(btn => {
@@ -182,6 +231,22 @@ async function loadTestimonials() {
         const id = btn.getAttribute('data-del-t');
         await fetch(`/admin/api/testimonials/${id}`, { method: 'DELETE' });
         loadTestimonials();
+      });
+    });
+
+    document.querySelectorAll('[data-toggle-t]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-toggle-t');
+        try {
+          const res = await fetch(`/admin/api/testimonials/${id}/toggle`, { method: 'POST' });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.message || 'Toggle failed');
+          const cell = document.querySelector(`[data-t-public="${id}"]`);
+          if (cell) cell.textContent = data.is_public ? 'Yes' : 'No';
+          btn.textContent = data.is_public ? 'Unpublish' : 'Publish';
+        } catch (e) {
+          alert('Failed to toggle testimonial: ' + e.message);
+        }
       });
     });
   } catch (e) {
@@ -237,7 +302,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('#adminSidebar .list-group-item').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const section = btn.getAttribute('data-section');
-      if (!section) return; // logs link
+      // Intercept only the specific level links; allow generic Logs to navigate normally
+      const levelAttr = btn.getAttribute('data-log-level');
+      if (!section && levelAttr) {
+        e.preventDefault();
+        setActive(btn);
+        return loadLogs(levelAttr.toUpperCase());
+      }
+      if (!section) return; // allow navigation for anchors without data-section/data-log-level
       setActive(btn);
       if (section === 'users') return loadUsers();
       if (section === 'items') return loadItems();
@@ -245,6 +317,57 @@ document.addEventListener('DOMContentLoaded', () => {
       if (section === 'email') return loadEmailForm();
     });
   });
+
+  async function loadLogs(level) {
+    const title = 'Logs' + (level ? ` - ${level}` : '');
+    document.getElementById('sectionHeader').querySelector('h4').textContent = title;
+    const actions = document.getElementById('sectionActions');
+    actions.innerHTML = `
+      <div class="d-flex gap-2">
+        <select id="logDays" class="form-select form-select-sm" style="width:auto">
+          <option value="1">1d</option>
+          <option value="3">3d</option>
+          <option value="7" selected>7d</option>
+          <option value="14">14d</option>
+          <option value="30">30d</option>
+        </select>
+        <button id="logRefresh" class="btn btn-sm btn-outline-primary">Refresh</button>
+        <div class="form-check ms-2">
+          <input class="form-check-input" type="checkbox" id="logWrap">
+          <label class="form-check-label" for="logWrap">Wrap</label>
+        </div>
+      </div>
+    `;
+    const body = document.getElementById('sectionBody');
+    body.innerHTML = `
+      <div class="card">
+        <div class="card-body" style="padding:0;">
+          <pre id="logPre" style="margin:0;padding:16px;background:#0f172a;color:#e2e8f0;height:60vh;overflow:auto;white-space:pre;font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">Loading...</pre>
+        </div>
+      </div>
+    `;
+
+    async function fetchAndRender() {
+      const days = document.getElementById('logDays').value;
+      const wrap = document.getElementById('logWrap').checked;
+      const qs = new URLSearchParams({ days, order: 'desc', limit: '2000' });
+      if (level) qs.set('level', level);
+      try {
+        const res = await fetch(`/admin/logs/text?${qs.toString()}`);
+        const payload = await res.json();
+        const pre = document.getElementById('logPre');
+        const lines = (payload && payload.lines) ? payload.lines : [];
+        pre.style.whiteSpace = wrap ? 'pre-wrap' : 'pre';
+        pre.textContent = lines.length ? lines.join('\n') : 'No matching log lines.';
+      } catch (e) {
+        document.getElementById('logPre').textContent = `Error: ${e.message}`;
+      }
+    }
+
+    document.getElementById('logRefresh').addEventListener('click', fetchAndRender);
+    document.getElementById('logWrap').addEventListener('change', fetchAndRender);
+    fetchAndRender();
+  }
 });
 </script>
 {% endblock %}

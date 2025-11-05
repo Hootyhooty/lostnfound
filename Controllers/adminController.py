@@ -129,6 +129,122 @@ def get_logs_json():
         return jsonify({"error": str(e)}), 500
 
 
+# -------------------------------------------------
+# Full-text logs endpoint
+# -------------------------------------------------
+@roles_required("admin")
+def get_logs_text(user=None):
+    """Return raw log lines filtered by date range and level.
+
+    Query params:
+      - days: int, default 7 (ignored if start/end provided)
+      - level: INFO|WARNING|ERROR (optional)
+      - start_date, end_date: YYYY-MM-DD (optional)
+      - limit: max number of lines to return (default 1000)
+      - order: asc|desc (default desc for newest first)
+    """
+    try:
+        from flask import request
+
+        days_param = request.args.get("days", default="7")
+        level_param = request.args.get("level")
+        start_date = request.args.get("start_date")
+        end_date = request.args.get("end_date")
+        limit_param = request.args.get("limit", default="1000")
+        order = (request.args.get("order", "desc") or "desc").lower()
+
+        try:
+            limit = max(1, min(10000, int(limit_param)))
+        except (TypeError, ValueError):
+            limit = 1000
+
+        # Build date window
+        end_dt = datetime.now()
+        start_dt = end_dt - timedelta(days=max(1, int(days_param)) if days_param else 7)
+        if start_date:
+            try:
+                start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+            except ValueError:
+                pass
+        if end_date:
+            try:
+                end_dt = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)
+            except ValueError:
+                pass
+
+        level_filter = {"INFO", "ERROR", "WARNING"}
+        if level_param and level_param.upper() in level_filter:
+            level_filter = {level_param.upper()}
+
+        log_dir = "logs"
+        files = []
+        try:
+            for filename in os.listdir(log_dir):
+                if not filename.startswith(("app.log", "error.log")):
+                    continue
+                path = os.path.join(log_dir, filename)
+                try:
+                    mtime = datetime.fromtimestamp(os.path.getmtime(path))
+                except Exception:
+                    mtime = datetime.min
+                # quick pre-filter by modified time
+                if mtime < start_dt:
+                    continue
+                files.append((mtime, filename, path))
+        except FileNotFoundError:
+            return jsonify({"lines": [], "count": 0})
+
+        # newest files first to satisfy desc order efficiently
+        files.sort(key=lambda t: t[0], reverse=True)
+
+        collected = []
+        pattern = LOG_PATTERN
+
+        def accepts_line(line: str) -> bool:
+            m = pattern.match(line)
+            if not m:
+                return False
+            date_str, lvl = m.groups()
+            if lvl not in level_filter:
+                return False
+            try:
+                line_dt = datetime.strptime(date_str, "%Y-%m-%d")
+            except ValueError:
+                return False
+            return start_dt <= line_dt < end_dt
+
+        for _, filename, path in files:
+            opener = gzip.open if filename.endswith(".gz") else open
+            try:
+                with opener(path, "rt", encoding="utf-8", errors="ignore") as f:
+                    if filename.endswith(".gz"):
+                        # Read all to allow reverse iteration
+                        lines = f.readlines()
+                    else:
+                        lines = f.readlines()
+            except Exception:
+                continue
+
+            iterable = reversed(lines) if order == "desc" else lines
+            for line in iterable:
+                if accepts_line(line):
+                    collected.append(line.rstrip("\n"))
+                    if len(collected) >= limit:
+                        break
+            if len(collected) >= limit:
+                break
+
+        # If ascending requested and we gathered in desc, normalize
+        if order == "asc":
+            pass
+        else:
+            # already newest-first
+            pass
+
+        return jsonify({"lines": collected, "count": len(collected)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # =============================
 # Admin Dashboard and API
 # =============================
@@ -197,6 +313,18 @@ def admin_users_api():
         return jsonify({"success": False, "message": str(e)}), 500
 
 
+def admin_user_toggle_active(user_id):
+    from Models.userModel import User
+    try:
+        u = User.objects(id=user_id).first()
+        if not u:
+            return jsonify({"success": False, "message": "User not found"}), 404
+        u.active = not bool(getattr(u, "active", True))
+        u.save()
+        return jsonify({"success": True, "active": u.active})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
 def admin_user_delete(user_id):
     from Models.userModel import User
     try:
@@ -223,6 +351,10 @@ def admin_items_api():
                     "status": getattr(it, "status", ""),
                     "category": getattr(it, "category", ""),
                     "city": getattr(it, "city_town", ""),
+                    "address": getattr(it, "address", ""),
+                    "state_province": getattr(it, "state_province", ""),
+                    "zipcode": getattr(it, "zipcode", ""),
+                    "country": getattr(it, "country", ""),
                     "created_at": getattr(it, "created_at", None),
                     "is_active": getattr(it, "is_active", True),
                 }
@@ -239,6 +371,19 @@ def admin_item_delete(item_id):
             return jsonify({"success": False, "message": "Item not found"}), 404
         it.delete()
         return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+def admin_item_toggle_active(item_id):
+    from Models.lostItemModel import LostItem
+    try:
+        it = LostItem.objects(id=item_id).first()
+        if not it:
+            return jsonify({"success": False, "message": "Item not found"}), 404
+        it.is_active = not bool(getattr(it, "is_active", True))
+        it.save()
+        return jsonify({"success": True, "is_active": it.is_active})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
@@ -271,6 +416,19 @@ def admin_testimonial_delete(tid):
             return jsonify({"success": False, "message": "Testimonial not found"}), 404
         t.delete()
         return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+def admin_testimonial_toggle_public(tid):
+    from Models.testimonialModel import Testimonial
+    try:
+        t = Testimonial.objects(id=tid).first()
+        if not t:
+            return jsonify({"success": False, "message": "Testimonial not found"}), 404
+        t.is_public = not bool(getattr(t, "is_public", True))
+        t.save()
+        return jsonify({"success": True, "is_public": t.is_public})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 

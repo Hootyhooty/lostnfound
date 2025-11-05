@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="layout_padding">
+  <div class="container">
+    <div class="heading_container heading_center mb-4">
+      <h2>Testimonial</h2>
+    </div>
+
+    <div class="row justify-content-center">
+      {% for t in testimonials[:6] %}
+        <div class="col-md-4 col-sm-6 mb-4">
+          <div class="card testimonial-card shadow-sm h-100 text-center p-3">
+            <div class="d-flex flex-column align-items-center">
+              <img src="/uploads/{{ t.user_photo }}"
+                   class="rounded-circle mb-3 shadow-sm"
+                   alt="user"
+                   style="width:100px; height:100px; object-fit:cover;">
+              <h5 class="fw-semibold mb-1">{{ t.user_name }}</h5>
+              <p class="text-secondary message-text">{{ t.message }}</p>
+              <p class="text-muted small mb-2">
+                {{ t.created_at.strftime('%Y-%m-%d') if t.created_at else 'just now' }}
+              </p>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="d-flex justify-content-between mt-3">
+      <a href="/testimonial?limit=6&r={{ range(1, 999999)|random }}" class="btn btn-link p-0">
+        See more
+      </a>
+      <button id="open-testimonial" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#testimonialModal">
+        Leave your testimonial
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- Modal -->
+<div class="modal fade" id="testimonialModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Fill your message</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="t-alert" class="alert alert-warning d-none" role="alert">
+          Login required to submit.
+        </div>
+        <div class="form-group">
+          <textarea id="t-message" class="form-control" rows="6" placeholder="Write your message..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button id="t-submit" type="button" class="btn btn-primary">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function(){
+    const submitBtn = document.getElementById('t-submit');
+    const msgEl = document.getElementById('t-message');
+    const alertEl = document.getElementById('t-alert');
+    const openBtn = document.getElementById('open-testimonial');
+    let existingMessage = null;
+
+    function showAlert(text, type){
+      alertEl.className = 'alert alert-' + (type || 'warning');
+      alertEl.textContent = text;
+      alertEl.classList.remove('d-none');
+    }
+
+    // Detect login and load user testimonial if available
+    fetch('/me', { credentials: 'include' })
+      .then(res => res.ok ? res.json() : Promise.reject(res))
+      .then(() => fetch('/api/testimonials/me', { credentials: 'include' }))
+      .then(res => res.ok ? res.json() : Promise.reject(res))
+      .then(data => {
+        if (data.hasTestimonial && data.testimonial){
+          existingMessage = data.testimonial.message || '';
+          if (openBtn) openBtn.textContent = 'Edit your testimonial';
+        }
+      })
+      .catch(() => {});
+
+    if (openBtn){
+      openBtn.addEventListener('click', function(){
+        msgEl.value = existingMessage || '';
+        alertEl.classList.add('d-none');
+      });
+    }
+
+    submitBtn.addEventListener('click', async function(){
+      const message = (msgEl.value || '').trim();
+      if (!message){
+        showAlert('Please enter a message.', 'warning');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/testimonials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ message })
+        });
+        if (res.status === 401){
+          showAlert('Login required to submit.', 'warning');
+          return;
+        }
+        const data = await res.json();
+        if (!data.success){
+          showAlert(data.message || 'Failed to submit.', 'danger');
+          return;
+        }
+
+        const list = document.querySelector('.row');
+        const t = data.testimonial;
+        const card = document.createElement('div');
+        card.className = 'col-md-4 col-sm-6 mb-4';
+        card.innerHTML = `
+          <div class="card testimonial-card shadow-sm h-100 text-center p-3">
+            <div class="d-flex flex-column align-items-center">
+              <img src="/uploads/${t.user_photo}" class="rounded-circle mb-3 shadow-sm" style="width:100px;height:100px;object-fit:cover;" alt="user">
+              <h5 class="fw-semibold mb-1">${t.user_name}</h5>
+              <p class="text-muted small mb-2">just now</p>
+              <p class="text-secondary message-text">${message}</p>
+            </div>
+          </div>`;
+        list.prepend(card);
+        msgEl.value = '';
+        alertEl.classList.add('d-none');
+        existingMessage = message;
+        if (openBtn) openBtn.textContent = 'Edit your testimonial';
+        if (window.jQuery) jQuery('#testimonialModal').modal('hide');
+      } catch (e){
+        showAlert('Unexpected error. Please try again.', 'danger');
+      }
+    });
+  })();
+</script>
+{% endblock %}

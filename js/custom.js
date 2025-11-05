@@ -1547,35 +1547,34 @@ function formatDate(dateString) {
     renderBasketModal();
   });
 
-  // Submit basket (PayPal/Stripe) - for now, just POST and show alert/redirect
-  function submitBasket(payment_method) {
-    let basket = getBasket();
-    if (!Object.keys(basket).length) {
-      alert('Basket is empty.'); return;
-    }
-    let items = Object.values(basket);
-    let total_price = parseFloat(basketTotalPrice(basket));
-    fetch('/api/v1/sales', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('access_token')||''}` },
-      body: JSON.stringify({ items, total_price, payment_method })
-    })
-    .then(r=>r.json())
-    .then(res => {
-      if (res.success) {
-        alert('Sale recorded. Redirecting to ' + payment_method + ' checkout (simulated).');
-        // You would redirect to provider with sale_id, for now just clear basket
-        saveBasket({});
-        renderBasketCount();
-        renderBasketModal();
-        bootstrap.Modal.getInstance(document.getElementById('basketModal')).hide();
-      } else {
-        alert('Checkout failed: ' + res.message);
-      }
+  // Submit basket to real providers
+  async function checkoutStripe(items){
+    const res = await fetch('/api/checkout/stripe',{
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({items})
     });
+    const data = await res.json();
+    if (data && data.url){ window.location = data.url; } else { alert('Stripe init failed'); }
   }
-  document.getElementById('paypalCheckout').addEventListener('click', ()=>submitBasket('paypal'));
-  document.getElementById('stripeCheckout').addEventListener('click', ()=>submitBasket('stripe'));
+
+  async function checkoutPaypal(items){
+    const res = await fetch('/api/paypal/create-order',{
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({items})
+    });
+    const data = await res.json();
+    if (data && data.approve_url){ window.location = data.approve_url; }
+    else { alert('PayPal init failed'); }
+  }
+
+  function beginCheckout(method){
+    const basket = getBasket();
+    if (!Object.keys(basket).length){ alert('Basket is empty.'); return; }
+    const items = Object.values(basket);
+    if (method==='stripe') return checkoutStripe(items);
+    if (method==='paypal') return checkoutPaypal(items);
+  }
+
+  document.getElementById('paypalCheckout').addEventListener('click', ()=>beginCheckout('paypal'));
+  document.getElementById('stripeCheckout').addEventListener('click', ()=>beginCheckout('stripe'));
 
   // Initial count on page load
   renderBasketCount();

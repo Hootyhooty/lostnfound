@@ -1,0 +1,45 @@
+<div class="modal fade" id="locationMapModal" tabindex="-1" aria-labelledby="locationMapModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="locationMapModalLabel">
+          <i class="fa fa-map-marker-alt me-2"></i>Select Location
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="p-3 bg-light border-bottom">
+          <div class="input-group">
+            <input type="text" class="form-control" id="locationSearchInput" placeholder="Search for a location...">
+            <button class="btn btn-outline-secondary" type="button" id="searchLocationBtn">
+              <i class="fa fa-search"></i>
+            </button>
+          </div>
+        </div>
+        <div id="locationMap" class="lf-map-container"></div>
+        <div class="p-3 bg-light border-top">
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <small class="text-muted">
+                <i class="fa fa-info-circle me-1"></i>
+                Click on the map to select your location
+              </small>
+            </div>
+            <div class="col-md-6 text-end">
+              <button type="button" class="btn btn-sm btn-outline-primary" id="useCurrentLocationBtn">
+                <i class="fa fa-crosshairs me-1"></i>Use Current Location
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirmLocationBtn" disabled>
+          <i class="fa fa-check me-1"></i>Use This Location
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+

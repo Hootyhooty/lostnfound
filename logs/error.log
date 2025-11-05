@@ -1,190 +1,4 @@
-2025-11-03 15:11:49,278 [ERROR] in app: Unexpected error: cluster0-shard-00-02.eegpm.mongodb.net:27017: timed out (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms),cluster0-shard-00-00.eegpm.mongodb.net:27017: timed out (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms),cluster0-shard-00-01.eegpm.mongodb.net:27017: timed out (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 30s, Topology Description: <TopologyDescription id: 69086300088f9b17750f9433, topology_type: ReplicaSetNoPrimary, servers: [<ServerDescription ('cluster0-shard-00-00.eegpm.mongodb.net', 27017) server_type: Unknown, rtt: None, error=NetworkTimeout('cluster0-shard-00-00.eegpm.mongodb.net:27017: timed out (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>, <ServerDescription ('cluster0-shard-00-01.eegpm.mongodb.net', 27017) server_type: Unknown, rtt: None, error=NetworkTimeout('cluster0-shard-00-01.eegpm.mongodb.net:27017: timed out (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>, <ServerDescription ('cluster0-shard-00-02.eegpm.mongodb.net', 27017) server_type: Unknown, rtt: None, error=NetworkTimeout('cluster0-shard-00-02.eegpm.mongodb.net:27017: timed out (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]> | Path: /api/v1/users/me
-Traceback (most recent call last):
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
-    rv = self.dispatch_request()
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
-    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
-  File "C:\Users\oneto\Lost&Found\Utils\auth_decorator.py", line 36, in decorated
-    user = User.objects(id=decoded.get("user_id")).first()
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\mongoengine\queryset\base.py", line 301, in first
-    result = queryset[0]
-             ~~~~~~~~^^^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\mongoengine\queryset\base.py", line 205, in __getitem__
-    queryset._cursor[key],
-    ~~~~~~~~~~~~~~~~^^^^^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\pymongo\synchronous\cursor.py", line 640, in __getitem__
-    for doc in clone:  # type: ignore[attr-defined]
-               ^^^^^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\pymongo\synchronous\cursor.py", line 1289, in __next__
-    return self.next()
-           ~~~~~~~~~^^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\pymongo\synchronous\cursor.py", line 1265, in next
-    if len(self._data) or self._refresh():
-                          ~~~~~~~~~~~~~^^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\pymongo\synchronous\cursor.py", line 1213, in _refresh
-    self._send_message(q)
-    ~~~~~~~~~~~~~~~~~~^^^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\pymongo\synchronous\cursor.py", line 1108, in _send_message
-    response = client._run_operation(
-        operation, self._unpack_response, address=self._address
-    )
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\pymongo\_csot.py", line 125, in csot_wrapper
-    return func(self, *args, **kwargs)
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 1938, in _run_operation
-    return self._retryable_read(
-           ~~~~~~~~~~~~~~~~~~~~^
-        _cmd,
-        ^^^^^
-    ...<4 lines>...
-        operation=operation.name,
-        ^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2047, in _retryable_read
-    return self._retry_internal(
-           ~~~~~~~~~~~~~~~~~~~~^
-        func,
-        ^^^^^
-    ...<7 lines>...
-        operation_id=operation_id,
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\pymongo\_csot.py", line 125, in csot_wrapper
-    return func(self, *args, **kwargs)
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2014, in _retry_internal
-    ).run()
-      ~~~^^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2765, in run
-    return self._read() if self._is_read else self._write()
-           ~~~~~~~~~~^^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2910, in _read
-    self._server = self._get_server()
-                   ~~~~~~~~~~~~~~~~^^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 2858, in _get_server
-    return self._client._select_server(
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        self._server_selector,
-        ^^^^^^^^^^^^^^^^^^^^^^
-    ...<4 lines>...
-        operation_id=self._operation_id,
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\pymongo\synchronous\mongo_client.py", line 1833, in _select_server
-    server = topology.select_server(
-        server_selector,
-    ...<2 lines>...
-        operation_id=operation_id,
-    )
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 409, in select_server
-    server = self._select_server(
-        selector,
-    ...<4 lines>...
-        operation_id=operation_id,
-    )
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 387, in _select_server
-    servers = self.select_servers(
-        selector, operation, server_selection_timeout, address, operation_id
-    )
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 294, in select_servers
-    server_descriptions = self._select_servers_loop(
-        selector, server_timeout, operation, operation_id, address
-    )
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\pymongo\synchronous\topology.py", line 344, in _select_servers_loop
-    raise ServerSelectionTimeoutError(
-        f"{self._error_message(selector)}, Timeout: {timeout}s, Topology Description: {self.description!r}"
-    )
-pymongo.errors.ServerSelectionTimeoutError: cluster0-shard-00-02.eegpm.mongodb.net:27017: timed out (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms),cluster0-shard-00-00.eegpm.mongodb.net:27017: timed out (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms),cluster0-shard-00-01.eegpm.mongodb.net:27017: timed out (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms), Timeout: 30s, Topology Description: <TopologyDescription id: 69086300088f9b17750f9433, topology_type: ReplicaSetNoPrimary, servers: [<ServerDescription ('cluster0-shard-00-00.eegpm.mongodb.net', 27017) server_type: Unknown, rtt: None, error=NetworkTimeout('cluster0-shard-00-00.eegpm.mongodb.net:27017: timed out (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>, <ServerDescription ('cluster0-shard-00-01.eegpm.mongodb.net', 27017) server_type: Unknown, rtt: None, error=NetworkTimeout('cluster0-shard-00-01.eegpm.mongodb.net:27017: timed out (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>, <ServerDescription ('cluster0-shard-00-02.eegpm.mongodb.net', 27017) server_type: Unknown, rtt: None, error=NetworkTimeout('cluster0-shard-00-02.eegpm.mongodb.net:27017: timed out (configured timeouts: socketTimeoutMS: 20000.0ms, connectTimeoutMS: 20000.0ms)')>]>
-2025-11-03 17:12:45,050 [ERROR] in app: Unexpected error: Encountered unknown tag 'endblock'. | Path: /testimonial
-Traceback (most recent call last):
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
-    rv = self.dispatch_request()
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
-    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
-  File "C:\Users\oneto\Lost&Found\Controllers\viewController.py", line 55, in testimonial
-    return render_template("testimonial.html", testimonials=testimonials)
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\flask\templating.py", line 149, in render_template
-    template = app.jinja_env.get_or_select_template(template_name_or_list)
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\jinja2\environment.py", line 1087, in get_or_select_template
-    return self.get_template(template_name_or_list, parent, globals)
-           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\jinja2\environment.py", line 1016, in get_template
-    return self._load_template(name, globals)
-           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\jinja2\environment.py", line 975, in _load_template
-    template = self.loader.load(self, name, self.make_globals(globals))
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\jinja2\loaders.py", line 138, in load
-    code = environment.compile(source, name, filename)
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\jinja2\environment.py", line 771, in compile
-    self.handle_exception(source=source_hint)
-    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
-    raise rewrite_traceback_stack(source=source)
-  File "C:\Users\oneto\Lost&Found\Templates\testimonial.html", line 68, in template
-    {% endblock %}
-jinja2.exceptions.TemplateSyntaxError: Encountered unknown tag 'endblock'.
-2025-11-03 17:13:43,512 [ERROR] in app: Unexpected error: Encountered unknown tag 'endblock'. | Path: /testimonial
-Traceback (most recent call last):
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
-    rv = self.dispatch_request()
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
-    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
-  File "C:\Users\oneto\Lost&Found\Controllers\viewController.py", line 55, in testimonial
-    return render_template("testimonial.html", testimonials=testimonials)
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\flask\templating.py", line 149, in render_template
-    template = app.jinja_env.get_or_select_template(template_name_or_list)
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\jinja2\environment.py", line 1087, in get_or_select_template
-    return self.get_template(template_name_or_list, parent, globals)
-           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\jinja2\environment.py", line 1016, in get_template
-    return self._load_template(name, globals)
-           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\jinja2\environment.py", line 975, in _load_template
-    template = self.loader.load(self, name, self.make_globals(globals))
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\jinja2\loaders.py", line 138, in load
-    code = environment.compile(source, name, filename)
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\jinja2\environment.py", line 771, in compile
-    self.handle_exception(source=source_hint)
-    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
-    raise rewrite_traceback_stack(source=source)
-  File "C:\Users\oneto\Lost&Found\Templates\testimonial.html", line 68, in template
-    {% endblock %}
-jinja2.exceptions.TemplateSyntaxError: Encountered unknown tag 'endblock'.
-2025-11-03 17:15:38,623 [ERROR] in app: Unexpected error: Encountered unknown tag 'endblock'. | Path: /testimonial
-Traceback (most recent call last):
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
-    rv = self.dispatch_request()
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
-    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
-  File "C:\Users\oneto\Lost&Found\Controllers\viewController.py", line 55, in testimonial
-    return render_template("testimonial.html", testimonials=testimonials)
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\flask\templating.py", line 149, in render_template
-    template = app.jinja_env.get_or_select_template(template_name_or_list)
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\jinja2\environment.py", line 1087, in get_or_select_template
-    return self.get_template(template_name_or_list, parent, globals)
-           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\jinja2\environment.py", line 1016, in get_template
-    return self._load_template(name, globals)
-           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\jinja2\environment.py", line 975, in _load_template
-    template = self.loader.load(self, name, self.make_globals(globals))
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\jinja2\loaders.py", line 138, in load
-    code = environment.compile(source, name, filename)
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\jinja2\environment.py", line 771, in compile
-    self.handle_exception(source=source_hint)
-    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\jinja2\environment.py", line 942, in handle_exception
-    raise rewrite_traceback_stack(source=source)
-  File "C:\Users\oneto\Lost&Found\Templates\testimonial.html", line 68, in template
-    {% endblock %}
-jinja2.exceptions.TemplateSyntaxError: Encountered unknown tag 'endblock'.
-2025-11-03 18:22:15,353 [ERROR] in app: Unexpected error: 405 Method Not Allowed: The method is not allowed for the requested URL. | Path: /api/v1/sales
+2025-11-05 17:36:57,334 [ERROR] in app: Unexpected error: 405 Method Not Allowed: The method is not allowed for the requested URL. | Path: /api/v1/sales
 Traceback (most recent call last):
   File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
     rv = self.dispatch_request()
@@ -199,3 +13,27 @@ Traceback (most recent call last):
   File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\werkzeug\routing\map.py", line 624, in match
     raise MethodNotAllowed(valid_methods=list(e.have_match_for)) from None
 werkzeug.exceptions.MethodNotAllowed: 405 Method Not Allowed: The method is not allowed for the requested URL.
+2025-11-05 18:03:01,146 [ERROR] in app: Unexpected error: 'NoneType' object is not callable | Path: /api/paypal/create-order
+Traceback (most recent call last):
+  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\oneto\Lost&Found\Controllers\salesController.py", line 129, in paypal_create_order
+    client = _paypal_client()
+  File "C:\Users\oneto\Lost&Found\Controllers\salesController.py", line 118, in _paypal_client
+    environment = SandboxEnvironment(client_id=client_id, client_secret=client_secret)
+TypeError: 'NoneType' object is not callable
+2025-11-05 18:03:34,379 [ERROR] in app: Unexpected error: 'NoneType' object is not callable | Path: /api/paypal/create-order
+Traceback (most recent call last):
+  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "C:\Users\oneto\Downloads\Blog\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\oneto\Lost&Found\Controllers\salesController.py", line 129, in paypal_create_order
+    client = _paypal_client()
+  File "C:\Users\oneto\Lost&Found\Controllers\salesController.py", line 118, in _paypal_client
+    environment = SandboxEnvironment(client_id=client_id, client_secret=client_secret)
+TypeError: 'NoneType' object is not callable

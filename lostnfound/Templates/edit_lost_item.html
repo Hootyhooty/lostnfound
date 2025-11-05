@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+      <div class="card shadow">
+        <div class="card-header bg-dark text-white">
+          <h4 class="mb-0"><i class="fa fa-edit me-2"></i> Edit Item</h4>
+        </div>
+        <div class="card-body">
+          <form id="editItemForm" enctype="multipart/form-data">
+            <!-- Reuse similar structure as report form; keep minimal for edit -->
+
+            <div class="mb-3">
+              <label class="form-label">Title</label>
+              <input type="text" class="form-control" id="title" value="{{ item.title or '' }}" />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Description</label>
+              <textarea class="form-control" id="description" rows="4">{{ item.description or '' }}</textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-success">Save Changes</button>
+              <a href="/item/{{ slug }}" class="btn btn-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  const token = localStorage.getItem('access_token');
+  const form = document.getElementById('editItemForm');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+      title: document.getElementById('title').value.trim(),
+      description: document.getElementById('description').value.trim()
+    };
+    try {
+      const idHex = '{{ item.id }}';
+      const resp = await fetch(`/api/v1/lost-items/${idHex}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+      const result = await resp.json();
+      if (resp.ok && result && result.success) {
+        alert('Item updated successfully');
+        window.location.href = '/item/{{ slug }}';
+      } else {
+        alert(result.message || 'Failed to update item');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error updating item');
+    }
+  });
+})();
+</script>
+{% endblock %}
+
