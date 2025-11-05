@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="shop_section">
+  <div class="container">
+    <h2 class="text-center mb-4">Payment Receipt</h2>
+
+    {% if sale.status != 'paid' %}
+      <div class="alert alert-warning">Payment is not marked as paid yet. If you just completed checkout, this page will update shortly.</div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title mb-3">Order Summary</h5>
+        <p><strong>Order ID:</strong> {{ sale.id }}</p>
+        <p><strong>Payment Method:</strong> {{ sale.payment_method|capitalize }}</p>
+        <p><strong>Status:</strong> {{ sale.status }}</p>
+        <p><strong>Total Items:</strong> {{ sale.item_count or (items|sum(attribute='qty')) }}</p>
+        <p><strong>Total Paid:</strong> ${{ '%.2f' % sale.total_price }}</p>
+        {% if sale.stripe_receipt_url %}
+          <p><a class="btn btn-sm btn-outline-secondary" href="{{ sale.stripe_receipt_url }}" target="_blank">View Stripe Receipt</a></p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <h5>Items</h5>
+      <ul class="list-group">
+        {% for it in items %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{{ it.name }}</strong>
+              <div class="text-muted">Unit: ${{ '%.2f' % (it.unit_price_cents/100.0) }}</div>
+            </div>
+            <span class="badge bg-primary rounded-pill">x{{ it.qty }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="text-center mt-4">
+      <a class="btn btn-primary" href="/shop">Back to Shop</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+

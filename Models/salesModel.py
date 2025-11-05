@@ -21,6 +21,8 @@ class Sale(Document):
     # Auditing identifiers
     paypal_capture_id = StringField()
     stripe_charge_id = StringField()
+    stripe_receipt_url = StringField()
+    item_count = IntField()
 
     meta = {
         'collection': 'sales',

@@ -1,4 +1,4 @@
-from flask import request, jsonify, redirect
+from flask import request, jsonify, redirect, render_template
 from Utils.auth_decorator import token_required
 from Models.salesModel import Sale
 from Models.userModel import User
@@ -55,7 +55,7 @@ def create_stripe_checkout():
     total_price = total_cents / 100.0
     # Persist sale using validated snapshot
     items_json = [json.dumps(it) for it in validated_items]
-    sale = Sale(items=items_json, total_price=total_price, created_at=datetime.utcnow(), status='created', payment_method='stripe')
+    sale = Sale(items=items_json, total_price=total_price, created_at=datetime.utcnow(), status='created', payment_method='stripe', item_count=sum(i['qty'] for i in validated_items))
     sale.save()
 
     if not stripe:
@@ -95,11 +95,32 @@ def stripe_success():
     if not session_id:
         return redirect('/shop?paid=stripe_error')
     try:
-        session = stripe.checkout.Session.retrieve(session_id)
+        session = stripe.checkout.Session.retrieve(session_id, expand=['payment_intent.latest_charge'])
         sale = Sale.objects(stripe_id=session_id).first()
         if session.get('payment_status') == 'paid' and sale:
             sale.status = 'paid'
+            # Attempt to capture charge id and receipt url from expanded intent
+            charge_id = None
+            receipt_url = None
+            try:
+                pi = session.get('payment_intent')
+                if isinstance(pi, dict):
+                    charge_id = (pi.get('latest_charge') or {}).get('id') or pi.get('latest_charge')
+                    if charge_id and isinstance(pi.get('latest_charge'), dict):
+                        receipt_url = pi['latest_charge'].get('receipt_url')
+                if not receipt_url and charge_id:
+                    ch = stripe.Charge.retrieve(charge_id)
+                    receipt_url = ch.get('receipt_url')
+            except Exception:
+                pass
+            if charge_id:
+                sale.stripe_charge_id = charge_id
+            if receipt_url:
+                sale.stripe_receipt_url = receipt_url
             sale.save()
+        # Redirect to receipt page
+        if sale:
+            return redirect(f"/receipt/{sale.id}")
         return redirect('/shop?paid=stripe_success')
     except Exception:
         return redirect('/shop?paid=stripe_error')
@@ -167,7 +188,7 @@ def paypal_create_order():
                 if link.get('rel') == 'approve':
                     approve_url = link.get('href')
                     break
-            sale = Sale(items=items_json, total_price=total_price, created_at=datetime.utcnow(), status='pending', payment_method='paypal', paypal_id=order_id)
+            sale = Sale(items=items_json, total_price=total_price, created_at=datetime.utcnow(), status='pending', payment_method='paypal', paypal_id=order_id, item_count=sum(i['qty'] for i in validated_items))
             sale.save()
             return jsonify({'id': order_id, 'approve_url': approve_url})
     except Exception as e:
@@ -230,16 +251,21 @@ def stripe_webhook():
         payment_intent_id = session.get('payment_intent')
         sale = Sale.objects(stripe_id=session_id).first()
         charge_id = None
+        receipt_url = None
         try:
             if payment_intent_id:
-                pi = stripe.PaymentIntent.retrieve(payment_intent_id)
-                charge_id = pi.get('latest_charge')
+                pi = stripe.PaymentIntent.retrieve(payment_intent_id, expand=['latest_charge'])
+                charge_id = pi.get('latest_charge') if isinstance(pi.get('latest_charge'), str) else (pi.get('latest_charge') or {}).get('id')
+                if isinstance(pi.get('latest_charge'), dict):
+                    receipt_url = pi['latest_charge'].get('receipt_url')
         except Exception:
             charge_id = None
         if sale:
             sale.status = 'paid'
             if charge_id:
                 sale.stripe_charge_id = charge_id
+            if receipt_url:
+                sale.stripe_receipt_url = receipt_url
             sale.save()
     elif event['type'] == 'payment_intent.succeeded':
         pi = event['data']['object']
@@ -263,3 +289,20 @@ def stripe_webhook():
                 sale.stripe_charge_id = charge_id
             sale.save()
     return jsonify({"received": True})
+
+
+# ============================
+# Receipt view
+# ============================
+def receipt_view(sale_id):
+    try:
+        sale = Sale.objects.get(id=sale_id)
+    except Exception:
+        return redirect('/shop?paid=not_found')
+    # Decode items for display
+    items = []
+    try:
+        items = [json.loads(s) for s in (sale.items or [])]
+    except Exception:
+        items = []
+    return render_template('receipt.html', sale=sale, items=items)
