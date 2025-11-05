@@ -21,8 +21,8 @@ function hideModal(id) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Always reset basket on page load
-  try { localStorage.removeItem('basket'); } catch (e) {}
+  // Always reset basket on page load (clear the correct key)
+  try { localStorage.removeItem('lf_basket'); } catch (e) {}
   // -------------------------
   // Element references
   // -------------------------
@@ -1555,7 +1555,11 @@ function formatDate(dateString) {
       method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({items})
     });
     const data = await res.json();
-    if (data && data.url){ window.location = data.url; } else { alert('Stripe init failed'); }
+    if (data && data.url){ 
+      // Clear basket before redirecting to payment
+      localStorage.removeItem('lf_basket');
+      window.location = data.url; 
+    } else { alert('Stripe init failed'); }
   }
 
   async function checkoutPaypal(items){
@@ -1563,7 +1567,11 @@ function formatDate(dateString) {
       method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({items})
     });
     const data = await res.json();
-    if (data && data.approve_url){ window.location = data.approve_url; }
+    if (data && data.approve_url){ 
+      // Clear basket before redirecting to payment
+      localStorage.removeItem('lf_basket');
+      window.location = data.approve_url; 
+    }
     else { alert('PayPal init failed'); }
   }
 

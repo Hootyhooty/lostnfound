@@ -45,6 +45,19 @@ def create_sale(user):
 # Stripe Checkout
 # ============================
 def create_stripe_checkout():
+    # Try to get user if authenticated (optional)
+    user_id = None
+    try:
+        from Utils.auth_decorator import token_required
+        from Utils.jwt_utils import decode_token
+        token = request.headers.get('Authorization', '').replace('Bearer ', '') or request.cookies.get('access_token')
+        if token:
+            decoded = decode_token(token)
+            if decoded and 'user_id' in decoded:
+                user_id = decoded['user_id']
+    except Exception:
+        pass
+    
     data = request.get_json() or {}
     items = data.get('items', [])
     # Validate against catalog and compute totals server-side
@@ -72,14 +85,17 @@ def create_stripe_checkout():
 
     # Encode compact items map for metadata (e.g., mug:2,shirt:1)
     compact = ",".join([f"{i['product_code']}:{i['qty']}" for i in validated_items])[:480]
+    metadata = {'items_compact': compact}
+    if user_id:
+        metadata['user_id'] = str(user_id)
     session = stripe.checkout.Session.create(
         mode='payment',
         line_items=line_items,
         success_url=f"{request.host_url.rstrip('/')}/stripe/success?session_id={{CHECKOUT_SESSION_ID}}",
         cancel_url=f"{request.host_url.rstrip('/')}/shop?paid=stripe_cancel",
-        metadata={'items_compact': compact},
+        metadata=metadata,
         payment_intent_data={
-            'metadata': {'items_compact': compact}
+            'metadata': metadata
         }
     )
     return jsonify({'url': session.url})
@@ -112,9 +128,12 @@ def stripe_success():
             if not sale:
                 # Create paid Sale now using metadata items
                 try:
-                    items_compact = (session.get('metadata') or {}).get('items_compact', '')
+                    meta = session.get('metadata') or {}
+                    items_compact = meta.get('items_compact', '')
+                    user_id_str = meta.get('user_id')
                 except Exception:
                     items_compact = ''
+                    user_id_str = None
                 validated_items = []
                 total_cents = 0
                 if items_compact:
@@ -138,7 +157,14 @@ def stripe_success():
                     except Exception:
                         validated_items = []
                         total_cents = 0
+                user_ref = None
+                if user_id_str:
+                    try:
+                        user_ref = User.objects.get(id=user_id_str)
+                    except Exception:
+                        pass
                 sale = Sale(
+                    user=user_ref,
                     items=[json.dumps(it) for it in validated_items],
                     total_price=(total_cents/100.0) if total_cents else 0.0,
                     created_at=datetime.utcnow(),
@@ -184,6 +210,18 @@ def _paypal_token():
 
 
 def paypal_create_order():
+    # Try to get user if authenticated (optional)
+    user_id_str = None
+    try:
+        from Utils.jwt_utils import decode_token
+        token = request.headers.get('Authorization', '').replace('Bearer ', '') or request.cookies.get('access_token')
+        if token:
+            decoded = decode_token(token)
+            if decoded and 'user_id' in decoded:
+                user_id_str = str(decoded['user_id'])
+    except Exception:
+        pass
+    
     data = request.get_json() or {}
     items = data.get('items', [])
     try:
@@ -198,8 +236,10 @@ def paypal_create_order():
         return jsonify({'error': 'PayPal not configured'}), 500
     return_url = f"{request.host_url.rstrip('/')}/paypal/return"
     cancel_url = f"{request.host_url.rstrip('/')}/shop?paid=paypal_cancel"
-    # encode compact items in custom_id to reconstruct on return
-    compact = ",".join([f"{i['product_code']}:{i['qty']}" for i in validated_items])[:120]
+    # encode compact items + user_id in custom_id to reconstruct on return
+    compact = ",".join([f"{i['product_code']}:{i['qty']}" for i in validated_items])[:100]
+    if user_id_str:
+        compact = f"{compact}|u:{user_id_str}"
     body = {
         'intent': 'CAPTURE',
         'purchase_units': [{
@@ -251,9 +291,15 @@ def paypal_return():
                 # Build items from custom_id
                 validated_items = []
                 total_cents = 0
+                user_id_str = None
                 compact = None
                 try:
-                    compact = data['purchase_units'][0].get('custom_id')
+                    compact_raw = data['purchase_units'][0].get('custom_id', '')
+                    if '|u:' in compact_raw:
+                        compact, user_part = compact_raw.split('|u:', 1)
+                        user_id_str = user_part
+                    else:
+                        compact = compact_raw
                 except Exception:
                     compact = None
                 if compact:
@@ -276,12 +322,19 @@ def paypal_return():
                                 total_cents += line['line_total_cents']
                     except Exception:
                         pass
+                user_ref = None
+                if user_id_str:
+                    try:
+                        user_ref = User.objects.get(id=user_id_str)
+                    except Exception:
+                        pass
                 cap_id = None
                 try:
                     cap_id = data['purchase_units'][0]['payments']['captures'][0]['id']
                 except Exception:
                     cap_id = None
                 sale = Sale(
+                    user=user_ref,
                     items=[json.dumps(it) for it in validated_items],
                     total_price=(total_cents/100.0) if total_cents else float(data['purchase_units'][0]['payments']['captures'][0]['amount']['value']),
                     created_at=datetime.utcnow(),
@@ -334,8 +387,16 @@ def stripe_webhook():
             # Create Sale now (paid) using compact metadata
             validated_items = []
             total_cents = 0
+            user_ref = None
             try:
-                items_compact = (session.get('metadata') or {}).get('items_compact', '')
+                meta = session.get('metadata') or {}
+                items_compact = meta.get('items_compact', '')
+                user_id_str = meta.get('user_id')
+                if user_id_str:
+                    try:
+                        user_ref = User.objects.get(id=user_id_str)
+                    except Exception:
+                        pass
             except Exception:
                 items_compact = ''
             if items_compact:
@@ -360,6 +421,7 @@ def stripe_webhook():
                     validated_items = []
                     total_cents = 0
             sale = Sale(
+                user=user_ref,
                 items=[json.dumps(it) for it in validated_items],
                 total_price=(total_cents/100.0) if total_cents else 0.0,
                 created_at=datetime.utcnow(),
