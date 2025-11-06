@@ -4,6 +4,8 @@ from logging.handlers import TimedRotatingFileHandler,RotatingFileHandler, SMTPH
 
 import timedelta
 from flask import Flask, send_from_directory, request, jsonify
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 # Removed SQLAlchemy and Migrate - using MongoDB instead
 from datetime import datetime
 from collections import defaultdict
@@ -32,6 +34,18 @@ app.config['SECRET_KEY'] = 'your_secret_key'
 app.secret_key = os.getenv("SECRET_KEY", "supersecretkey")
 app.config['JWT_SECRET'] = os.getenv("JWT_SECRET", "super_jwt_secret")
 #app.permanent_session_lifetime = timedelta(hours=2)
+
+# ----------------------------
+# Rate Limiter
+# ----------------------------
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=[
+        os.getenv("LIMIT_DEFAULT_HOURLY", "200 per hour"),
+        os.getenv("LIMIT_DEFAULT_SECONDLY", "10 per second")
+    ],
+)
 
 # Serve CSS from Templates/css
 @app.route('/css/<path:filename>')
@@ -164,6 +178,26 @@ def handle_unexpected_error(err):
     return render_template("error.html",
                            error_code=500,
                            error_message="Internal Server Error"), 500
+
+# ----------------------------
+#   Rate Limit Error Handler
+# ----------------------------
+@app.errorhandler(429)
+def ratelimit_handler(err):
+    if (request.path.startswith("/api") or 
+        request.path.startswith("/register") or 
+        request.path.startswith("/login") or 
+        request.path.startswith("/logout") or 
+        request.path.startswith("/me") or 
+        request.accept_mimetypes.best == "application/json" or
+        request.headers.get('Content-Type') == 'application/json'):
+        return jsonify({
+            "status": "fail",
+            "message": "Rate limit exceeded. Please slow down."
+        }), 429
+    return render_template("error.html",
+                           error_code=429,
+                           error_message="Too Many Requests"), 429
 
 @app.route("/uploads/<filename>")
 def get_uploaded_image(filename):
