@@ -1593,28 +1593,27 @@ document.getElementById('boxReportLink')?.addEventListener('click', function(e){
   e.preventDefault();
   let token = localStorage.getItem('access_token');
   if (!token) {
-    // Try login modal first
+    // Show alert to guest users
+    let existing = document.getElementById('loginRequiredAlert');
+    if (existing) existing.remove();
+    let alert = document.createElement('div');
+    alert.id = 'loginRequiredAlert';
+    alert.className = 'alert alert-warning text-center fade show';
+    alert.style = 'position:fixed;top:45%;left:50%;transform:translate(-50%,-50%);z-index:3000;width:360px;padding:30px;font-size:1.1rem;box-shadow:0 7px 24px rgba(0,0,0,0.15);background:#fff;border-radius:8px;';
+    alert.innerHTML = `<strong style="font-size:1.2rem;">Login Required</strong><br><br>Please register or login to report items.<br><br>
+      <button class='btn btn-sm btn-secondary mt-2 ms-2' onclick='this.parentElement.remove()'>Close</button>`;
+    document.body.appendChild(alert);
+    
+    // Also try to show login modal if available
     if (window.showLogin) {
-      window.showLogin();
-    } else {
-      // Fallback to custom alert centered on page
-      let existing = document.getElementById('loginRequiredAlert');
-      if (existing) existing.remove();
-      let alert = document.createElement('div');
-      alert.id = 'loginRequiredAlert';
-      alert.className = 'alert alert-warning text-center fade show';
-      alert.style = 'position:fixed;top:45%;left:50%;transform:translate(-50%,-50%);z-index:3000;width:320px;padding:27px;font-size:1.1rem;box-shadow:0 7px 24px rgba(0,0,0,0.06);background:#fff;';
-      alert.innerHTML = `<strong>Login required</strong><br>Please login to report items.<br><button class='btn btn-sm btn-secondary mt-2' onclick='this.parentElement.remove()'>Close</button>`;
-      document.body.appendChild(alert);
+      setTimeout(() => window.showLogin(), 500);
     }
     return;
   }
   window.location.href = '/report-lost-found';
 });
-document.getElementById('boxShopLink')?.addEventListener('click', function(e){
-  e.preventDefault();
-  let token = localStorage.getItem('access_token');
-  if (!token) { window.showLogin && window.showLogin(); return; }
-  window.location.href = '/shop';
-});
+
+// Handler for shop link - allow guests to visit shop (no restrictions)
+// Remove the event listener to allow natural link navigation
+// The href="/shop" in HTML will work without JavaScript interference
 
