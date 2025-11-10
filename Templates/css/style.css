@@ -1386,3 +1386,39 @@ a:focus {
 .shop_section .btn-primary:hover, .shop_section .btn-primary:active { background: #442c19; border-color: #442c19; color: #fffbe9; transform: translateY(-2px) scale(1.04); }
 .shop_section .donation_section h4,
 .shop_section .donation_section p { color: white; }
+
+.about_section {
+  color: #f5f5f5; /* soft white-gray for readability */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); /* adds depth */
+}
+
+.about_section .heading_container h2 {
+  color: #fff;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.about_section .detail-box p {
+  line-height: 1.8;
+  font-size: 1.05rem;
+  color: #f0f0f0;
+}
+
+.about_section .img-box .box-img {
+  width: 100%;
+  max-width: 250px; /* adjust as you like */
+  border-radius: 20px; /* round corners */
+  /* or use 50% for a perfect circle: */
+  /* border-radius: 50%; */
+  object-fit: cover;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border: 3px solid #fff; /* optional: adds a nice clean border */
+  display: block;
+  margin: 0 auto;
+}
+
+.about_section .img-box .box-img:hover {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
+}

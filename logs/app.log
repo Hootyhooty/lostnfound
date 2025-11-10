@@ -1,3 +1,35 @@
-2025-11-07 16:03:37,222 [INFO] in logger: 🚀 Logging initialized successfully.
-2025-11-07 16:03:49,161 [WARNING] in errorController: 404 Not Found: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. | URL: http://127.0.0.1:4000/login | Method: GET | IP: 127.0.0.1
-2025-11-07 16:04:12,390 [WARNING] in errorController: 404 Not Found: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. | URL: http://127.0.0.1:4000/login | Method: GET | IP: 127.0.0.1
+2025-11-10 12:42:06,951 [INFO] in logger: 🧹 Deleted old log: logs\access.log.2025-10-13.gz
+2025-11-10 12:42:06,956 [INFO] in logger: 🧹 Deleted old log: logs\access.log.2025-10-19.gz
+2025-11-10 12:42:06,958 [INFO] in logger: 🧹 Deleted old log: logs\access.log.2025-10-22.gz
+2025-11-10 12:42:06,959 [INFO] in logger: 🧹 Deleted old log: logs\access.log.2025-10-24.gz
+2025-11-10 12:42:06,960 [INFO] in logger: 🧹 Deleted old log: logs\access.log.2025-10-26.gz
+2025-11-10 12:42:06,961 [INFO] in logger: 🧹 Deleted old log: logs\access.log.2025-10-27.gz
+2025-11-10 12:42:06,962 [INFO] in logger: 🧹 Deleted old log: logs\access.log.2025-10-29.gz
+2025-11-10 12:42:06,963 [INFO] in logger: 🧹 Deleted old log: logs\access.log.2025-10-30.gz
+2025-11-10 12:42:06,964 [INFO] in logger: 🧹 Deleted old log: logs\access.log.2025-10-31.gz
+2025-11-10 12:42:06,965 [INFO] in logger: 🧹 Deleted old log: logs\app.log.2025-10-13.gz
+2025-11-10 12:42:06,965 [INFO] in logger: 🧹 Deleted old log: logs\app.log.2025-10-19.gz
+2025-11-10 12:42:06,966 [INFO] in logger: 🧹 Deleted old log: logs\app.log.2025-10-22.gz
+2025-11-10 12:42:06,966 [INFO] in logger: 🧹 Deleted old log: logs\app.log.2025-10-24.gz
+2025-11-10 12:42:06,967 [INFO] in logger: 🧹 Deleted old log: logs\app.log.2025-10-26.gz
+2025-11-10 12:42:06,968 [INFO] in logger: 🧹 Deleted old log: logs\app.log.2025-10-27.gz
+2025-11-10 12:42:06,968 [INFO] in logger: 🧹 Deleted old log: logs\app.log.2025-10-29.gz
+2025-11-10 12:42:06,969 [INFO] in logger: 🧹 Deleted old log: logs\app.log.2025-10-30.gz
+2025-11-10 12:42:06,969 [INFO] in logger: 🧹 Deleted old log: logs\app.log.2025-10-31.gz
+2025-11-10 12:42:06,973 [INFO] in logger: 🧹 Deleted old log: logs\error.log.2025-10-13.gz
+2025-11-10 12:42:06,976 [INFO] in logger: 🧹 Deleted old log: logs\error.log.2025-10-19.gz
+2025-11-10 12:42:06,976 [INFO] in logger: 🧹 Deleted old log: logs\error.log.2025-10-22.gz
+2025-11-10 12:42:06,978 [INFO] in logger: 🧹 Deleted old log: logs\error.log.2025-10-24.gz
+2025-11-10 12:42:06,979 [INFO] in logger: 🧹 Deleted old log: logs\error.log.2025-10-27.gz
+2025-11-10 12:42:06,979 [INFO] in logger: 🧹 Deleted old log: logs\error.log.2025-10-29.gz
+2025-11-10 12:42:06,980 [INFO] in logger: 🚀 Logging initialized successfully.
+2025-11-10 12:45:05,296 [INFO] in logger: 🗜️ Compressed log: logs\access.log.2025-11-07
+2025-11-10 12:45:05,298 [INFO] in logger: 🗜️ Compressed log: logs\app.log.2025-11-07
+2025-11-10 12:45:05,299 [INFO] in logger: 🚀 Logging initialized successfully.
+2025-11-10 12:50:24,103 [INFO] in logger: 🚀 Logging initialized successfully.
+2025-11-10 12:54:07,495 [INFO] in logger: 🚀 Logging initialized successfully.
+2025-11-10 13:00:29,107 [INFO] in logger: 🚀 Logging initialized successfully.
+2025-11-10 13:01:36,363 [WARNING] in errorController: 404 Not Found: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. | URL: http://127.0.0.1:4000/index.html | Method: GET | IP: 127.0.0.1
+2025-11-10 13:01:39,266 [WARNING] in errorController: 404 Not Found: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. | URL: http://127.0.0.1:4000/about.html | Method: GET | IP: 127.0.0.1
+2025-11-10 13:04:37,980 [WARNING] in errorController: 404 Not Found: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. | URL: http://127.0.0.1:4000/index.html | Method: GET | IP: 127.0.0.1
+2025-11-10 13:05:03,224 [INFO] in logger: 🚀 Logging initialized successfully.
