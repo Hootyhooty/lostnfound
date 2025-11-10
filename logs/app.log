@@ -33,3 +33,5 @@
 2025-11-10 13:01:39,266 [WARNING] in errorController: 404 Not Found: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. | URL: http://127.0.0.1:4000/about.html | Method: GET | IP: 127.0.0.1
 2025-11-10 13:04:37,980 [WARNING] in errorController: 404 Not Found: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again. | URL: http://127.0.0.1:4000/index.html | Method: GET | IP: 127.0.0.1
 2025-11-10 13:05:03,224 [INFO] in logger: 🚀 Logging initialized successfully.
+2025-11-10 14:06:50,708 [INFO] in logger: 🚀 Logging initialized successfully.
+2025-11-10 14:09:31,471 [INFO] in logger: 🚀 Logging initialized successfully.

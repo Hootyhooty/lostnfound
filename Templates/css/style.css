@@ -1407,7 +1407,7 @@ a:focus {
 
 .about_section .img-box .box-img {
   width: 100%;
-  max-width: 250px; /* adjust as you like */
+  max-width: 400px; /* adjust as you like */
   border-radius: 20px; /* round corners */
   /* or use 50% for a perfect circle: */
   /* border-radius: 50%; */
